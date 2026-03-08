@@ -54,6 +54,7 @@ class Board {
 
         // Initialize components
         new Core\Roles();
+        new Core\Email();
         new UI\Shortcodes();
         new Auth\Handler();
         new UI\Branding();

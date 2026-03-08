@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
     });
 
     // Simple AJAX Auth Handlers
-    $(document).on('submit', '#board-auth-form, #board-auth-form-reg, #board-auth-form-reset', function(e) {
+    $(document).on('submit', '#board-auth-form, #board-auth-form-reg, #board-auth-form-reset, #board-auth-form-otp, #board-auth-form-new-pass', function(e) {
         e.preventDefault();
         var form = $(this);
         var formData = form.serialize();
@@ -65,12 +65,19 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     boardNotify(response.data.message);
-                    if (response.data.redirect) {
+
+                    if (action === 'board_reset') {
+                        $('#board-auth-form-reset').hide();
+                        $('#board-auth-form-otp').fadeIn().find('input[name="username"]').val(response.data.username);
+                    } else if (action === 'board_verify_otp') {
+                        $('#board-auth-form-otp').hide();
+                        $('#board-auth-form-new-pass').fadeIn();
+                        $('#board-auth-form-new-pass input[name="username"]').val(form.find('input[name="username"]').val());
+                        $('#board-auth-form-new-pass input[name="otp"]').val(form.find('input[name="otp"]').val());
+                    } else if (response.data.redirect) {
                         setTimeout(function() { window.location.href = response.data.redirect; }, 1000);
-                    } else if (action !== 'board_reset') {
-                        setTimeout(function() { window.location.reload(); }, 1000);
                     } else {
-                        form.find('button').prop('disabled', false).text('Send Link');
+                        setTimeout(function() { window.location.reload(); }, 1000);
                     }
                 } else {
                     boardNotify(response.data.message, 'error');
@@ -330,7 +337,7 @@ jQuery(document).ready(function($) {
     });
 
     // Form Submissions with Notify
-    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form', function(e) {
+    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form, #board-email-settings-form', function(e) {
         e.preventDefault();
         var form = $(this);
         var btn = form.find('button[type="submit"]');
@@ -345,7 +352,8 @@ jQuery(document).ready(function($) {
             'board-generate-cert-form': 'board_generate_certificate',
             'board-add-user-form': 'board_add_user',
             'board-general-settings-form': 'board_save_general_settings',
-            'board-advanced-settings-form': 'board_save_advanced_settings'
+            'board-advanced-settings-form': 'board_save_advanced_settings',
+            'board-email-settings-form': 'board_save_email_settings'
         };
 
         action = actions[form.attr('id')];
@@ -481,6 +489,19 @@ jQuery(document).ready(function($) {
     }
 
     // Copy Serial to Clipboard
+    $(document).on('click', '#save-all-email-templates', function() {
+        var btn = $(this);
+        var data = { action: 'board_save_email_templates', nonce: board_ajax.nonce };
+        $('[name^="template_"]').each(function() {
+            data[$(this).attr('name')] = $(this).val();
+        });
+        btn.prop('disabled', true).text('Updating...');
+        $.post(board_ajax.ajax_url, data, function(response) {
+            btn.prop('disabled', false).text('Update All Templates');
+            if (response.success) boardNotify(response.data.message);
+        });
+    });
+
     $(document).on('click', '#copy-serial', function() {
         var serial = $(this).data('serial');
         var btn = $(this);

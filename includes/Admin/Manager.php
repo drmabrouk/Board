@@ -17,6 +17,8 @@ class Manager {
         add_action('wp_ajax_board_save_exam', array($this, 'handle_save_exam'));
         add_action('wp_ajax_board_save_design_settings', array($this, 'handle_save_design_settings'));
         add_action('wp_ajax_board_save_advanced_settings', array($this, 'handle_save_advanced_settings'));
+        add_action('wp_ajax_board_save_email_settings', array($this, 'handle_save_email_settings'));
+        add_action('wp_ajax_board_save_email_templates', array($this, 'handle_save_email_templates'));
         add_action('wp_ajax_board_export_json', array($this, 'handle_export_json'));
         add_action('admin_post_board_restore_backup', array($this, 'handle_restore_backup'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
@@ -223,6 +225,16 @@ class Manager {
         ));
 
         Plugin::log(__('Certificate Generated', 'board'), sprintf(__('Certificate %s generated.', 'board'), $serial));
+
+        if ($user_id) {
+            $user = get_userdata($user_id);
+            \GSHB\Board\Core\Email::send($user->user_email, 'certificate_issue', array(
+                'name'  => $user->display_name,
+                'title' => $title,
+                'code'  => $serial
+            ));
+        }
+
         wp_send_json_success(array('message' => __('Certificate generated successfully.', 'board'), 'serial' => $serial));
     }
 
@@ -457,7 +469,10 @@ class Manager {
 
         Plugin::log(__('Membership Approved', 'board'), sprintf(__('User %d approved for certified membership.', 'board'), $user_id));
 
-        wp_mail($user->user_email, __('Certified Membership Approved - GSHB', 'board'), sprintf(__('Hello %s, your certified membership has been approved. Code: %s', $user->display_name, $verify_code)));
+        \GSHB\Board\Core\Email::send($user->user_email, 'membership_approval', array(
+            'name' => $user->display_name,
+            'code' => $verify_code
+        ));
 
         wp_send_json_success(array('message' => __('Membership approved.', 'board'), 'code' => $verify_code));
     }
@@ -505,6 +520,39 @@ class Manager {
         update_option('board_debug_mode', sanitize_text_field($_POST['debug_mode']));
         Plugin::log(__('Settings Updated', 'board'), __('Advanced settings were updated.', 'board'), get_current_user_id());
         wp_send_json_success(array('message' => __('Advanced settings saved.', 'board')));
+    }
+
+    public function handle_save_email_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        update_option('board_email_smtp_enabled', sanitize_text_field($_POST['email_smtp_enabled']));
+        update_option('board_email_smtp_host', sanitize_text_field($_POST['email_smtp_host']));
+        update_option('board_email_smtp_port', intval($_POST['email_smtp_port']));
+        update_option('board_email_smtp_user', sanitize_text_field($_POST['email_smtp_user']));
+        if (!empty($_POST['email_smtp_pass'])) {
+            update_option('board_email_smtp_pass', $_POST['email_smtp_pass']);
+        }
+        update_option('board_email_smtp_secure', sanitize_text_field($_POST['email_smtp_secure']));
+        update_option('board_email_from_address', sanitize_email($_POST['email_from_address']));
+        update_option('board_email_from_name', sanitize_text_field($_POST['email_from_name']));
+
+        Plugin::log(__('Email Settings Updated', 'board'), __('Email and SMTP settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('Email configuration saved.', 'board')));
+    }
+
+    public function handle_save_email_templates() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        foreach ($_POST as $key => $val) {
+            if (strpos($key, 'template_') === 0) {
+                update_option('board_email_' . $key, wp_kses_post($val));
+            }
+        }
+
+        Plugin::log(__('Email Templates Updated', 'board'), __('Email templates were customized.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('All templates updated.', 'board')));
     }
 
     public function handle_restore_backup() {

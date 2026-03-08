@@ -712,6 +712,7 @@ $user = wp_get_current_user();
             <div style="display: flex; border-bottom: 1px solid var(--board-black); margin-bottom: 30px; overflow-x: auto; background: var(--board-grey-100); padding: 5px;">
                 <a href="?cp_tab=settings&set_tab=general" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'general' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('General Configuration', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=design" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'design' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Design & Visual Identity', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=email" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'email' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('System Email & SMTP', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=logs" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'logs' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Audit & Activity Logs', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=backup" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'backup' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Data Backup & Recovery', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=advanced" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'advanced' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Advanced System Ops', 'board'); ?></a>
@@ -748,6 +749,90 @@ $user = wp_get_current_user();
                     </div>
                     <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save General Settings', 'board'); ?></button>
                 </form>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'email') : ?>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                    <div>
+                        <h4><?php _e('SMTP Infrastructure', 'board'); ?></h4>
+                        <form id="board-email-settings-form">
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Enable', 'board'); ?></label>
+                                <select name="email_smtp_enabled">
+                                    <option value="off" <?php selected(get_option('board_email_smtp_enabled'), 'off'); ?>>Off</option>
+                                    <option value="on" <?php selected(get_option('board_email_smtp_enabled'), 'on'); ?>>On</option>
+                                </select>
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Host', 'board'); ?></label>
+                                <input type="text" name="email_smtp_host" value="<?php echo esc_attr(get_option('board_email_smtp_host')); ?>" placeholder="smtp.example.com">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Port', 'board'); ?></label>
+                                <input type="number" name="email_smtp_port" value="<?php echo esc_attr(get_option('board_email_smtp_port', 587)); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Username', 'board'); ?></label>
+                                <input type="text" name="email_smtp_user" value="<?php echo esc_attr(get_option('board_email_smtp_user')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Password', 'board'); ?></label>
+                                <input type="password" name="email_smtp_pass" value="<?php echo esc_attr(get_option('board_email_smtp_pass')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Encryption', 'board'); ?></label>
+                                <select name="email_smtp_secure">
+                                    <option value="tls" <?php selected(get_option('board_email_smtp_secure'), 'tls'); ?>>TLS</option>
+                                    <option value="ssl" <?php selected(get_option('board_email_smtp_secure'), 'ssl'); ?>>SSL</option>
+                                </select>
+                            </div>
+                            <hr>
+                            <div class="board-form-field">
+                                <label><?php _e('Sender Identity (Email)', 'board'); ?></label>
+                                <input type="email" name="email_from_address" value="<?php echo esc_attr(get_option('board_email_from_address', get_option('admin_email'))); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Sender Identity (Name)', 'board'); ?></label>
+                                <input type="text" name="email_from_name" value="<?php echo esc_attr(get_option('board_email_from_name', get_bloginfo('name'))); ?>">
+                            </div>
+                            <button type="submit" class="board-btn-black"><?php _e('Save Email Config', 'board'); ?></button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h4><?php _e('Email Template Manager', 'board'); ?></h4>
+                        <p style="font-size: 12px; color: grey; margin-bottom: 20px;"><?php _e('Customize the content of system-generated emails. Use placeholders like {name}, {code}, {title}.', 'board'); ?></p>
+
+                        <?php
+                        $templates = array(
+                            'registration' => __('Account Registration', 'board'),
+                            'membership_request' => __('Membership Request Received', 'board'),
+                            'membership_approval' => __('Membership Approval', 'board'),
+                            'certificate_issue' => __('Certificate Issuance', 'board'),
+                            'password_otp' => __('Password Reset OTP', 'board')
+                        );
+                        foreach ($templates as $tid => $tlabel) : ?>
+                            <div style="background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <strong style="font-size: 13px;"><?php echo $tlabel; ?></strong>
+                                    <select name="template_<?php echo $tid; ?>_enabled" style="width: auto; padding: 2px 10px; font-size: 11px;">
+                                        <option value="on" <?php selected(get_option('board_email_template_'.$tid.'_enabled', 'on'), 'on'); ?>>Enabled</option>
+                                        <option value="off" <?php selected(get_option('board_email_template_'.$tid.'_enabled'), 'off'); ?>>Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="board-form-field">
+                                    <label style="font-size: 11px;"><?php _e('Subject Line', 'board'); ?></label>
+                                    <input type="text" name="template_<?php echo $tid; ?>_subject" value="<?php echo esc_attr(get_option('board_email_template_'.$tid.'_subject')); ?>" style="padding: 5px 10px; font-size: 12px;">
+                                </div>
+                                <div class="board-form-field" style="margin-bottom: 0;">
+                                    <label style="font-size: 11px;"><?php _e('Email Body', 'board'); ?></label>
+                                    <textarea name="template_<?php echo $tid; ?>_body" rows="4" style="font-size: 12px;"><?php echo esc_textarea(get_option('board_email_template_'.$tid.'_body')); ?></textarea>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <button type="button" class="board-btn-black" id="save-all-email-templates"><?php _e('Update All Templates', 'board'); ?></button>
+                    </div>
+                </div>
             <?php endif; ?>
 
             <?php if ($set_tab == 'design') : ?>
