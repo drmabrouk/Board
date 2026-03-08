@@ -88,15 +88,21 @@ jQuery(document).ready(function($) {
     });
 
     // Live Search: Users
-    $('#user-search, #role-filter').on('keyup change', function() {
+    $('#user-search, #role-filter, #status-filter').on('keyup change', function() {
         var searchVal = $('#user-search').val().toLowerCase();
         var roleVal = $('#role-filter').val();
+        var statusVal = $('#status-filter').val();
 
         $('#users-table tbody tr').each(function() {
             var rowText = $(this).text().toLowerCase();
             var rowRole = $(this).data('role');
-            var show = rowText.indexOf(searchVal) > -1 && (!roleVal || rowRole.indexOf(roleVal) > -1);
-            if (show) $(this).show();
+            var rowStatus = $(this).data('status');
+
+            var showSearch = rowText.indexOf(searchVal) > -1;
+            var showRole = !roleVal || rowRole.indexOf(roleVal) > -1;
+            var showStatus = !statusVal || rowStatus === statusVal;
+
+            if (showSearch && showRole && showStatus) $(this).show();
             else $(this).hide();
         });
     });
@@ -219,6 +225,42 @@ jQuery(document).ready(function($) {
 
     $(document).on('click', '#global-search-results .suggestion-item', function() {
         window.location.href = $(this).data('url');
+    });
+
+    // Dynamic User Lookup logic for forms
+    $(document).on('keyup', '.board-user-lookup-input', function() {
+        var input = $(this);
+        var val = input.val();
+        var target = input.siblings('.board-user-lookup-results');
+        var hiddenInput = input.siblings('input[type="hidden"]');
+
+        if (val.length < 2) {
+            target.hide();
+            hiddenInput.val('');
+            return;
+        }
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_user_lookup',
+            nonce: board_ajax.nonce,
+            term: val
+        }, function(response) {
+            if (response.success && response.data.length > 0) {
+                target.html(response.data.map(u => '<div class="suggestion-item" data-id="' + u.id + '">' + u.text + '</div>').join('')).show();
+            } else {
+                target.hide();
+            }
+        });
+    });
+
+    $(document).on('click', '.board-user-lookup-results .suggestion-item', function() {
+        var item = $(this);
+        var input = item.parent().siblings('.board-user-lookup-input');
+        var hiddenInput = item.parent().siblings('input[type="hidden"]');
+
+        input.val(item.text());
+        hiddenInput.val(item.data('id'));
+        item.parent().hide();
     });
 
     // Dynamic Role/Status Changes in Table

@@ -25,6 +25,8 @@ class Manager {
         add_action('wp_ajax_board_update_user_role', array($this, 'handle_update_role'));
         add_action('wp_ajax_board_update_user_status', array($this, 'handle_update_status'));
         add_action('wp_ajax_board_generate_certificate', array($this, 'handle_generate_certificate'));
+        add_action('wp_ajax_board_link_membership', array($this, 'handle_link_membership'));
+        add_action('wp_ajax_board_user_lookup', array($this, 'handle_user_lookup'));
         add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
@@ -238,6 +240,21 @@ class Manager {
         wp_send_json_success(array('message' => __('Certificate linked successfully.', 'board')));
     }
 
+    public function handle_link_membership() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $membership_id = intval($_POST['membership_id']);
+        $user_id = intval($_POST['user_id']);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_memberships';
+        $wpdb->update($table, array('user_id' => $user_id), array('id' => $membership_id));
+
+        Plugin::log(__('Membership Linked', 'board'), sprintf(__('Membership ID %d linked to user ID %d.', 'board'), $membership_id, $user_id));
+        wp_send_json_success(array('message' => __('Membership linked successfully.', 'board')));
+    }
+
     public function handle_update_role() {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
@@ -309,7 +326,7 @@ class Manager {
 
         $title = sanitize_text_field($_POST['title']);
         $code = sanitize_text_field($_POST['exam_code']);
-        $pid = intval($_POST['program_id']);
+        $pid = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $due = sanitize_text_field($_POST['exam_due']);
 
         DB::save_exam(array(
@@ -361,19 +378,24 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
-        $user_id = intval($_POST['user_id']);
+        $user_id = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
         $exam_id = intval($_POST['exam_id']);
 
-        $assigned = get_user_meta($user_id, 'assigned_exams', true);
-        if (!is_array($assigned)) $assigned = array();
+        if ($user_id) {
+            $assigned = get_user_meta($user_id, 'assigned_exams', true);
+            if (!is_array($assigned)) $assigned = array();
 
-        if (!in_array($exam_id, $assigned)) {
-            $assigned[] = $exam_id;
-            update_user_meta($user_id, 'assigned_exams', $assigned);
+            if (!in_array($exam_id, $assigned)) {
+                $assigned[] = $exam_id;
+                update_user_meta($user_id, 'assigned_exams', $assigned);
+            }
+            Plugin::log(__('Exam Assigned', 'board'), sprintf(__('Exam %d assigned to user %d.', 'board'), $exam_id, $user_id));
+        } else {
+            // Log manual entry for exam without user link
+            Plugin::log(__('Exam Record Created', 'board'), sprintf(__('Exam %d record created manually.', 'board'), $exam_id));
         }
 
-        Plugin::log(__('Exam Assigned', 'board'), sprintf(__('Exam %d assigned to user %d.', 'board'), $exam_id, $user_id));
-        wp_send_json_success(array('message' => __('Exam assigned to user.', 'board')));
+        wp_send_json_success(array('message' => __('Exam record processed.', 'board')));
     }
 
     public function handle_approval() {
@@ -603,5 +625,29 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_memberships';
         return $wpdb->get_results("SELECT * FROM $table WHERE status = 'pending' ORDER BY created_at DESC");
+    }
+
+    public function handle_user_lookup() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $search = sanitize_text_field($_POST['term']);
+        if (strlen($search) < 2) wp_send_json_success(array());
+
+        $users = get_users(array(
+            'search'         => '*' . $search . '*',
+            'search_columns' => array('user_login', 'user_nicename', 'user_email', 'display_name'),
+            'number'         => 10
+        ));
+
+        $results = array();
+        foreach ($users as $u) {
+            $results[] = array(
+                'id' => $u->ID,
+                'text' => sprintf('%s (@%s) - %s', $u->display_name, $u->user_login, $u->user_email)
+            );
+        }
+
+        wp_send_json_success($results);
     }
 }

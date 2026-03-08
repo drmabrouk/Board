@@ -194,11 +194,12 @@ class Handler {
     public function handle_membership_request() {
         check_ajax_referer('board_nonce', 'nonce');
 
-        if (!is_user_logged_in()) {
+        $user_id = !empty($_POST['user_id']) ? intval($_POST['user_id']) : (is_user_logged_in() ? get_current_user_id() : null);
+
+        if (!$user_id && !Roles::can_access_cp()) {
             wp_send_json_error(array('message' => __('You must be logged in to apply.', 'board')));
         }
 
-        $user_id = get_current_user_id();
         $full_name = sanitize_text_field($_POST['full_name']);
         $country = sanitize_text_field($_POST['country']);
         $specialty = sanitize_text_field($_POST['specialty']);
