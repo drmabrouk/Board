@@ -66,7 +66,12 @@ get_header();
             </div>
             <div style="text-align: center;">
                 <img src="<?php echo esc_url($qr_url); ?>" alt="QR Code" style="border: 1px solid var(--board-black); padding: 15px; background: white; margin-bottom: 15px;">
-                <p style="font-size: 11px; color: grey; text-transform: uppercase; letter-spacing: 1px;"><?php _e('Scan for digital verification', 'board'); ?></p>
+                <p style="font-size: 11px; color: grey; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px;"><?php _e('Scan for digital verification', 'board'); ?></p>
+
+                <div style="border-top: 1px solid #eee; padding-top: 20px;">
+                    <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=<?php echo urlencode($serial); ?>&scale=2&rotate=N&includetext=true" alt="Barcode" style="max-width: 100%;">
+                    <p style="font-size: 10px; color: grey; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;"><?php _e('Standardized Barcode', 'board'); ?></p>
+                </div>
             </div>
         </div>
 

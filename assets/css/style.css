@@ -233,6 +233,31 @@ a:hover {
     text-transform: uppercase;
     font-size: 12px;
     letter-spacing: 0.5px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.board-table th:after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 4px solid transparent;
+    opacity: 0.3;
+}
+
+.board-table th.sorted-asc:after {
+    border-bottom-color: var(--board-white);
+    transform: translateY(-70%);
+    opacity: 1;
+}
+
+.board-table th.sorted-desc:after {
+    border-top-color: var(--board-white);
+    transform: translateY(-30%);
+    opacity: 1;
 }
 
 .board-table tbody tr {

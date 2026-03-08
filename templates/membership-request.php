@@ -52,7 +52,7 @@ if (!defined('ABSPATH')) {
         </form>
 
         <div id="cm-request-success" style="display: none; text-align: center;">
-            <h3 style="color: green;"><?php _e('Request Submitted Successfully!', 'board'); ?></h3>
+            <h3 style="font-weight: 800; border-bottom: 2px solid black; display: inline-block; padding-bottom: 5px; margin-bottom: 20px;"><?php _e('Request Submitted Successfully!', 'board'); ?></h3>
             <p><?php _e('Your application is being reviewed. You will be notified via email.', 'board'); ?></p>
             <a href="<?php echo home_url('/mb'); ?>" class="board-btn-black" style="display: inline-block; text-decoration: none; width: auto;"><?php _e('Back to Account', 'board'); ?></a>
         </div>

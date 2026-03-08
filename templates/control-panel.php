@@ -22,16 +22,16 @@ $user = wp_get_current_user();
 <div class="board-cp-layout">
     <aside class="board-cp-sidebar">
         <ul>
-            <li class="<?php echo (!isset($_GET['cp_tab']) || $_GET['cp_tab'] == 'dashboard') ? 'active' : ''; ?>"><a href="?cp_tab=dashboard"><span class="dashicons dashicons-dashboard"></span> <?php _e('Dashboard', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'users') ? 'active' : ''; ?>"><a href="?cp_tab=users"><span class="dashicons dashicons-users"></span> <?php _e('Users Management', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'logs') ? 'active' : ''; ?>"><a href="?cp_tab=logs"><span class="dashicons dashicons-list-view"></span> <?php _e('Activity Logs', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'settings') ? 'active' : ''; ?>"><a href="?cp_tab=settings"><span class="dashicons dashicons-admin-settings"></span> <?php _e('Settings', 'board'); ?></a></li>
+            <li class="<?php echo (!isset($_GET['cp_tab']) || $_GET['cp_tab'] == 'dashboard') ? 'active' : ''; ?>"><a href="?cp_tab=dashboard" data-tooltip="<?php _e('System Overview', 'board'); ?>"><span class="dashicons dashicons-dashboard"></span> <?php _e('Dashboard', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'users') ? 'active' : ''; ?>"><a href="?cp_tab=users" data-tooltip="<?php _e('Manage Members', 'board'); ?>"><span class="dashicons dashicons-users"></span> <?php _e('Users Management', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs" data-tooltip="<?php _e('Course Catalog', 'board'); ?>"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'logs') ? 'active' : ''; ?>"><a href="?cp_tab=logs" data-tooltip="<?php _e('Audit Trails', 'board'); ?>"><span class="dashicons dashicons-list-view"></span> <?php _e('Activity Logs', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'settings') ? 'active' : ''; ?>"><a href="?cp_tab=settings" data-tooltip="<?php _e('Global Config', 'board'); ?>"><span class="dashicons dashicons-admin-settings"></span> <?php _e('Settings', 'board'); ?></a></li>
         </ul>
     </aside>
 
@@ -53,13 +53,13 @@ $user = wp_get_current_user();
             <div style="margin-top: 40px;">
                 <h4><?php _e('Weekly Enrollment Activity', 'board'); ?></h4>
                 <div style="display: flex; align-items: flex-end; gap: 10px; height: 150px; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black);">
-                    <div style="flex: 1; background: var(--board-black); height: 40%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 70%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 55%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 90%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 30%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 65%;"></div>
-                    <div style="flex: 1; background: var(--board-black); height: 80%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 40%; opacity: 0.1;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 70%; opacity: 0.3;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 55%; opacity: 0.5;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 90%; opacity: 0.7;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 30%; opacity: 0.4;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 65%; opacity: 0.6;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 80%; opacity: 0.9;"></div>
                 </div>
                 <p style="font-size: 11px; text-align: center; margin-top: 10px;"><?php _e('Visual representation of program engagement and new member registrations.', 'board'); ?></p>
             </div>

@@ -48,7 +48,7 @@ $user = wp_get_current_user();
                     <p style="font-size: 16px; font-weight: 600; margin: 5px 0 0 0;">
                         <?php
                         if (Board_Roles::is_certified_member()) {
-                            echo '<span style="color: green;">' . __('Certified Member', 'board') . '</span>';
+                            echo '<span style="border-bottom: 2px solid var(--board-black);">' . __('Certified Member', 'board') . '</span>';
                         } else {
                             echo __('Regular Member', 'board');
                         }

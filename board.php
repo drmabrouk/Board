@@ -140,7 +140,8 @@ class Board {
 
         wp_localize_script('board-scripts', 'board_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('board_nonce')
+            'nonce'    => wp_create_nonce('board_nonce'),
+            'mb_url'   => home_url('/mb')
         ));
     }
 }

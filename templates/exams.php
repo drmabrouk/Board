@@ -38,27 +38,6 @@ if (!empty($assigned_exam_ids)) {
 
 ?>
 
-<script>
-jQuery(document).ready(function($) {
-    $('.start-exam').on('click', function() {
-        var btn = $(this);
-        var examId = btn.data('id');
-        if (confirm('<?php _e('Do you want to submit this exam with a random score for demo?', 'board'); ?>')) {
-            var score = Math.floor(Math.random() * 40) + 60; // 60-100
-            btn.prop('disabled', true).text('Submitting...');
-            $.post(board_ajax.ajax_url, {
-                action: 'board_submit_exam',
-                nonce: board_ajax.nonce,
-                exam_id: examId,
-                score: score
-            }, function(response) {
-                alert(response.data.message);
-                if (response.success) window.location.href = '<?php echo home_url('/mb'); ?>';
-            });
-        }
-    });
-});
-</script>
 
 <div class="board-container">
     <div style="text-align: center; margin-bottom: 40px;">
