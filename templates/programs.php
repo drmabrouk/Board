@@ -33,6 +33,22 @@ if ($programs_query->have_posts()) {
         <p><?php _e('Explore available professional programs and certifications.', 'board'); ?></p>
     </div>
 
+    <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <div style="flex-grow: 1;">
+            <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
+            <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+        </div>
+        <div>
+            <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Type', 'board'); ?></label>
+            <select id="program-type-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                <option value=""><?php _e('All Types', 'board'); ?></option>
+                <option value="Course"><?php _e('Course', 'board'); ?></option>
+                <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+            </select>
+        </div>
+    </div>
+
     <div class="board-programs-grid">
         <?php foreach ($programs as $program) : ?>
             <div class="board-program-card">
@@ -42,8 +58,8 @@ if ($programs_query->have_posts()) {
                     <strong><?php _e('Duration:', 'board'); ?></strong> <?php echo esc_html($program['dur']); ?>
                 </p>
                 <p><strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($program['code']); ?></p>
-                <p style="margin-top: 10px;"><?php echo esc_html($program['desc']); ?></p>
-                <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 15px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
+                <p style="margin-top: 10px; flex-grow: 1;"><?php echo esc_html($program['desc']); ?></p>
+                <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 25px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
             </div>
         <?php endforeach; ?>
     </div>

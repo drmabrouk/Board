@@ -15,10 +15,12 @@ if (!defined('ABSPATH')) {
             <h2><?php _e('Login', 'board'); ?></h2>
             <form id="board-auth-form" data-action="board_login">
                 <div class="board-form-field">
-                    <input type="text" name="username" placeholder="<?php _e('Username or Email', 'board'); ?>" required>
+                    <label><?php _e('Username or Email', 'board'); ?></label>
+                    <input type="text" name="username" placeholder="johndoe@example.com" required>
                 </div>
                 <div class="board-form-field">
-                    <input type="password" name="password" placeholder="<?php _e('Password', 'board'); ?>" required>
+                    <label><?php _e('Password', 'board'); ?></label>
+                    <input type="password" name="password" placeholder="••••••••" required>
                     <span class="toggle-password"><?php _e('Show', 'board'); ?></span>
                 </div>
                 <button type="submit" class="board-btn-black"><?php _e('Login', 'board'); ?></button>
@@ -34,13 +36,16 @@ if (!defined('ABSPATH')) {
             <h2><?php _e('Register', 'board'); ?></h2>
             <form id="board-auth-form-reg" data-action="board_register">
                 <div class="board-form-field">
-                    <input type="text" name="username" placeholder="<?php _e('Username', 'board'); ?>" required>
+                    <label><?php _e('Username', 'board'); ?></label>
+                    <input type="text" name="username" placeholder="johndoe" required>
                 </div>
                 <div class="board-form-field">
-                    <input type="email" name="email" placeholder="<?php _e('Email Address', 'board'); ?>" required>
+                    <label><?php _e('Email Address', 'board'); ?></label>
+                    <input type="email" name="email" placeholder="john@example.com" required>
                 </div>
                 <div class="board-form-field">
-                    <input type="password" name="password" placeholder="<?php _e('Password', 'board'); ?>" required>
+                    <label><?php _e('Password', 'board'); ?></label>
+                    <input type="password" name="password" placeholder="••••••••" required>
                     <span class="toggle-password"><?php _e('Show', 'board'); ?></span>
                 </div>
                 <button type="submit" class="board-btn-black"><?php _e('Register', 'board'); ?></button>
@@ -55,9 +60,10 @@ if (!defined('ABSPATH')) {
             <h2><?php _e('Reset Password', 'board'); ?></h2>
             <form id="board-auth-form-reset" data-action="board_reset">
                 <div class="board-form-field">
-                    <input type="text" name="username" placeholder="<?php _e('Username or Email', 'board'); ?>" required>
+                    <label><?php _e('Username or Email', 'board'); ?></label>
+                    <input type="text" name="username" placeholder="johndoe@example.com" required>
                 </div>
-                <p><?php _e('Enter your username or email address and we will send you a password reset link.', 'board'); ?></p>
+                <p style="font-size: 13px; margin-bottom: 20px; color: var(--board-grey-dark);"><?php _e('Enter your username or email address and we will send you a password reset link.', 'board'); ?></p>
                 <button type="submit" class="board-btn-black"><?php _e('Send Link', 'board'); ?></button>
                 <div class="board-auth-toggle">
                     <a data-target="board-login-view"><?php _e('Back to Login', 'board'); ?></a>

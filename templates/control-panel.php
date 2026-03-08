@@ -22,20 +22,20 @@ $user = wp_get_current_user();
 <div class="board-cp-layout">
     <aside class="board-cp-sidebar">
         <ul>
-            <li><a href="?cp_tab=dashboard"><?php _e('Dashboard', 'board'); ?></a></li>
-            <li><a href="?cp_tab=users"><?php _e('Users Management', 'board'); ?></a></li>
-            <li><a href="?cp_tab=programs"><?php _e('Programs', 'board'); ?></a></li>
-            <li><a href="?cp_tab=exams"><?php _e('Exams', 'board'); ?></a></li>
-            <li><a href="?cp_tab=requests"><?php _e('Membership Requests', 'board'); ?></a></li>
-            <li><a href="?cp_tab=certificates"><?php _e('Certificates', 'board'); ?></a></li>
-            <li><a href="?cp_tab=verification"><?php _e('Verification', 'board'); ?></a></li>
-            <li><a href="?cp_tab=reports"><?php _e('Reports', 'board'); ?></a></li>
-            <li><a href="?cp_tab=logs"><?php _e('Activity Logs', 'board'); ?></a></li>
-            <li><a href="?cp_tab=settings"><?php _e('Settings', 'board'); ?></a></li>
+            <li class="<?php echo (!isset($_GET['cp_tab']) || $_GET['cp_tab'] == 'dashboard') ? 'active' : ''; ?>"><a href="?cp_tab=dashboard"><span class="dashicons dashicons-dashboard"></span> <?php _e('Dashboard', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'users') ? 'active' : ''; ?>"><a href="?cp_tab=users"><span class="dashicons dashicons-users"></span> <?php _e('Users Management', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'logs') ? 'active' : ''; ?>"><a href="?cp_tab=logs"><span class="dashicons dashicons-list-view"></span> <?php _e('Activity Logs', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'settings') ? 'active' : ''; ?>"><a href="?cp_tab=settings"><span class="dashicons dashicons-admin-settings"></span> <?php _e('Settings', 'board'); ?></a></li>
         </ul>
     </aside>
 
-    <main class="board-cp-main" style="padding: 30px;">
+    <main class="board-cp-main">
         <?php
         $tab = isset($_GET['cp_tab']) ? $_GET['cp_tab'] : 'dashboard';
         $pending_requests = Board_Admin::get_pending_requests();
@@ -44,11 +44,11 @@ $user = wp_get_current_user();
 
         <?php if ($tab == 'dashboard') : ?>
             <h2><?php _e('Dashboard Overview', 'board'); ?></h2>
-            <div class="board-cp-cards" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
-                <div class="board-program-card"><h3><?php _e('Users', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php $uc = count_users(); echo $uc['total_users']; ?></p></div>
-                <div class="board-program-card"><h3><?php _e('Programs', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php echo wp_count_posts('board_program')->publish; ?></p></div>
-                <div class="board-program-card"><h3><?php _e('Pending Requests', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php echo $total_pending; ?></p></div>
-                <div class="board-program-card"><h3><?php _e('Certificates', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php echo wp_count_posts('board_certificate')->publish; ?></p></div>
+            <div class="board-cp-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div class="board-stat-card"><h3><?php _e('Users', 'board'); ?></h3><p class="board-stat-number"><?php $uc = count_users(); echo $uc['total_users']; ?></p></div>
+                <div class="board-stat-card"><h3><?php _e('Programs', 'board'); ?></h3><p class="board-stat-number"><?php echo wp_count_posts('board_program')->publish; ?></p></div>
+                <div class="board-stat-card"><h3><?php _e('Pending Requests', 'board'); ?></h3><p class="board-stat-number"><?php echo $total_pending; ?></p></div>
+                <div class="board-stat-card"><h3><?php _e('Certificates', 'board'); ?></h3><p class="board-stat-number"><?php echo wp_count_posts('board_certificate')->publish; ?></p></div>
             </div>
             <div style="margin-top: 40px;">
                 <h4><?php _e('Weekly Enrollment Activity', 'board'); ?></h4>
@@ -84,11 +84,21 @@ $user = wp_get_current_user();
             <div id="add-user-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 20px;">
                 <h4><?php _e('Create New User', 'board'); ?></h4>
                 <form id="board-add-user-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="board-form-field"><input type="text" name="username" placeholder="Username" required></div>
-                        <div class="board-form-field"><input type="email" name="email" placeholder="Email" required></div>
-                        <div class="board-form-field"><input type="password" name="password" placeholder="Password" required></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="board-form-field">
+                            <label><?php _e('Username', 'board'); ?></label>
+                            <input type="text" name="username" placeholder="johndoe" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Email Address', 'board'); ?></label>
+                            <input type="email" name="email" placeholder="john@example.com" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Password', 'board'); ?></label>
+                            <input type="password" name="password" placeholder="••••••••" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Assigned Role', 'board'); ?></label>
                             <select name="role" required>
                                 <option value="board_member"><?php _e('Member', 'board'); ?></option>
                                 <option value="certified_member"><?php _e('Certified Member', 'board'); ?></option>
@@ -96,18 +106,27 @@ $user = wp_get_current_user();
                             </select>
                         </div>
                     </div>
-                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Create User', 'board'); ?></button>
-                    <button type="button" id="close-add-user" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Create User', 'board'); ?></button>
+                        <button type="button" id="close-add-user" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Cancel', 'board'); ?></button>
+                    </div>
                 </form>
             </div>
 
-            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
-                <input type="text" id="user-search" placeholder="<?php _e('Search users...', 'board'); ?>" style="flex-grow: 1; padding: 10px; border: 1px solid var(--board-black);">
-                <select id="role-filter" style="padding: 10px; border: 1px solid var(--board-black);">
-                    <option value=""><?php _e('All Roles', 'board'); ?></option>
-                    <option value="board_member"><?php _e('Member', 'board'); ?></option>
-                    <option value="certified_member"><?php _e('Certified', 'board'); ?></option>
-                </select>
+            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex-grow: 1;">
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Users', 'board'); ?></label>
+                    <input type="text" id="user-search" placeholder="<?php _e('Search by name, ID or email...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Role', 'board'); ?></label>
+                    <select id="role-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                        <option value=""><?php _e('All Roles', 'board'); ?></option>
+                        <option value="board_member"><?php _e('Member', 'board'); ?></option>
+                        <option value="certified_member"><?php _e('Certified', 'board'); ?></option>
+                        <option value="academic_supervisor"><?php _e('Supervisor', 'board'); ?></option>
+                    </select>
+                </div>
             </div>
 
             <table class="board-table" id="users-table">
@@ -150,7 +169,7 @@ $user = wp_get_current_user();
                             <td><?php echo $certs_count; ?> / <?php echo $exams_count; ?></td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="board-btn-black delete-user" data-id="<?php echo $u->ID; ?>" style="width: auto; padding: 3px 8px; font-size: 10px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                                    <button class="board-btn-black board-btn-small delete-user" data-id="<?php echo $u->ID; ?>" data-tooltip="<?php _e('Permanently remove this user', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                                 </div>
                             </td>
                         </tr>
@@ -172,26 +191,53 @@ $user = wp_get_current_user();
             <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
                 <h4><?php _e('Create Program', 'board'); ?></h4>
                 <form id="board-save-program-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="board-form-field"><input type="text" name="title" placeholder="Program Title" required></div>
-                        <div class="board-form-field"><input type="text" name="code" placeholder="Program Code" required></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="board-form-field">
+                            <label><?php _e('Program Title', 'board'); ?></label>
+                            <input type="text" name="title" placeholder="e.g., Advanced Sports Nutrition" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Program Code', 'board'); ?></label>
+                            <input type="text" name="code" placeholder="e.g., ASN-2024" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Type', 'board'); ?></label>
                             <select name="type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
                                 <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
                             </select>
                         </div>
-                        <div class="board-form-field"><input type="text" name="duration" placeholder="Duration (e.g., 6 Months)"></div>
+                        <div class="board-form-field">
+                            <label><?php _e('Duration', 'board'); ?></label>
+                            <input type="text" name="duration" placeholder="e.g., 6 Months">
+                        </div>
                     </div>
-                    <div class="board-form-field"><textarea name="desc" placeholder="Program Description"></textarea></div>
-                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
-                    <button type="button" id="close-add-program" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                    <div class="board-form-field">
+                        <label><?php _e('Description', 'board'); ?></label>
+                        <textarea name="desc" placeholder="Brief program overview..." rows="4"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
+                        <button type="button" id="close-add-program" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Cancel', 'board'); ?></button>
+                    </div>
                 </form>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <input type="text" id="program-search" placeholder="<?php _e('Search programs...', 'board'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--board-black);">
+            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex-grow: 1;">
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
+                    <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Type', 'board'); ?></label>
+                    <select id="program-type-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                        <option value=""><?php _e('All Types', 'board'); ?></option>
+                        <option value="Course"><?php _e('Course', 'board'); ?></option>
+                        <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                        <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                    </select>
+                </div>
             </div>
 
             <div class="board-programs-grid" id="admin-programs-grid" style="padding: 0;">
@@ -211,9 +257,9 @@ $user = wp_get_current_user();
                                 <strong><?php _e('Code:', 'board'); ?></strong> <?php echo $code; ?>
                             </p>
                             <p style="font-size: 13px;"><?php echo wp_trim_words($p->post_content, 15); ?></p>
-                            <div style="margin-top: 15px; display: flex; gap: 5px;">
-                                <button class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 10px;"><?php _e('Edit', 'board'); ?></button>
-                                <button class="board-btn-black delete-program" data-id="<?php echo $p->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-outline delete-program" data-id="<?php echo $p->ID; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -227,6 +273,11 @@ $user = wp_get_current_user();
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Manage Exams', 'board'); ?></h3>
                 <button class="board-btn-black" id="open-add-exam" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Create Exam', 'board'); ?></button>
+            </div>
+
+            <div style="margin-bottom: 30px; max-width: 100%;">
+                <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Exams', 'board'); ?></label>
+                <input type="text" id="exam-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
             </div>
 
             <!-- Add Exam Form -->
@@ -325,8 +376,19 @@ $user = wp_get_current_user();
                 </form>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <input type="text" id="cert-search" placeholder="<?php _e('Search certificates...', 'board'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--board-black);">
+            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
+                <div style="flex-grow: 1;">
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Certificates', 'board'); ?></label>
+                    <input type="text" id="cert-search" placeholder="<?php _e('Search by name, serial or type...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Status', 'board'); ?></label>
+                    <select id="cert-status-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                        <option value=""><?php _e('All Statuses', 'board'); ?></option>
+                        <option value="active"><?php _e('Active', 'board'); ?></option>
+                        <option value="revoked"><?php _e('Revoked', 'board'); ?></option>
+                    </select>
+                </div>
             </div>
 
             <div class="board-programs-grid" id="admin-certs-grid" style="padding: 0;">
@@ -347,9 +409,9 @@ $user = wp_get_current_user();
                             </p>
                             <p style="font-size: 13px;"><code><?php echo $serial; ?></code></p>
                             <p style="font-size: 11px; margin-top: 5px; color: grey;"><?php _e('Issued:', 'board'); ?> <?php echo $issue_date; ?></p>
-                            <div style="margin-top: 15px; display: flex; gap: 5px;">
-                                <button class="board-btn-black revoke-cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: orange;"><?php _e('Revoke', 'board'); ?></button>
-                                <button class="board-btn-black delete-cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                <button class="board-btn-black board-btn-small board-btn-outline revoke-cert" data-id="<?php echo $c->ID; ?>" data-tooltip="<?php _e('Invalidate this certificate', 'board'); ?>"><?php _e('Revoke', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-outline delete-cert" data-id="<?php echo $c->ID; ?>" data-tooltip="<?php _e('Permanently delete record', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -425,12 +487,12 @@ $user = wp_get_current_user();
                     <p style="font-size: 13px;"><?php _e('Monthly trend of new certified members and issued diplomas.', 'board'); ?></p>
                 </div>
             </div>
-            <div style="background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black);">
+            <div style="background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black);">
                 <h4><?php _e('Data Export', 'board'); ?></h4>
-                <p style="font-size: 14px; margin-bottom: 15px;"><?php _e('Download comprehensive system data for auditing and performance tracking.', 'board'); ?></p>
-                <div style="display: flex; gap: 10px;">
-                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_users'), 'board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px;"><?php _e('Users Report', 'board'); ?></a>
-                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_certificates'), 'board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px; background: grey;"><?php _e('Certificates Report', 'board'); ?></a>
+                <p style="font-size: 14px; margin-bottom: 25px; color: var(--board-grey-dark);"><?php _e('Download comprehensive system data for auditing and performance tracking.', 'board'); ?></p>
+                <div style="display: flex; gap: 15px;">
+                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_users'), 'board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none;"><?php _e('Users Report', 'board'); ?></a>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_certificates'), 'board_export_certificates'); ?>" class="board-btn-black board-btn-outline" style="width: auto; text-decoration: none;"><?php _e('Certificates Report', 'board'); ?></a>
                 </div>
             </div>
         <?php endif; ?>
@@ -562,13 +624,16 @@ $user = wp_get_current_user();
 
             <?php if ($set_tab == 'backup') : ?>
                 <h4><?php _e('Data Portability', 'board'); ?></h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
                     <button class="board-btn-black" id="board-full-backup-json" style="width: auto;"><?php _e('Full Backup (JSON)', 'board'); ?></button>
-                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: inline-flex; gap: 10px;">
+                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: inline-flex; gap: 10px; align-items: flex-end;">
                         <?php wp_nonce_field('board_restore_nonce'); ?>
                         <input type="hidden" name="action" value="board_restore_backup">
-                        <input type="file" name="backup_file" required style="font-size: 11px;">
-                        <button type="submit" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Restore Data', 'board'); ?></button>
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Restore from File', 'board'); ?></label>
+                            <input type="file" name="backup_file" required style="font-size: 11px; padding: 10px; border: 1px solid #ccc;">
+                        </div>
+                        <button type="submit" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Restore Data', 'board'); ?></button>
                     </form>
                 </div>
             <?php endif; ?>
@@ -597,232 +662,13 @@ $user = wp_get_current_user();
 
 <script>
 jQuery(document).ready(function($) {
-    // Flash Messages for redirects
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('import') === 'success') alert('<?php _e('Users imported successfully.', 'board'); ?>');
-    if (urlParams.get('restore') === 'success') alert('<?php _e('Data restored successfully.', 'board'); ?>');
-
-    $('#verify-mgmt-search').on('keyup', function() {
-        var val = $(this).val().toLowerCase();
-        $('#verify-mgmt-table tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
-        });
-    });
-
-    $('.update-verify-status').on('click', function() {
-        var btn = $(this);
-        var type = btn.data('type');
-        var id = btn.data('id');
-        if (!confirm('<?php _e('Invalidate this record?', 'board'); ?>')) return;
-
-        if (type === 'cert') {
-            $.post(board_ajax.ajax_url, { action: 'board_revoke_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
-                alert(response.data.message); location.reload();
-            });
-        } else {
-            $.post(board_ajax.ajax_url, { action: 'board_update_user_status', nonce: board_ajax.nonce, user_id: id, status: 'suspended' }, function(response) {
-                alert(response.data.message); location.reload();
-            });
-        }
-    });
-
-    $('#log-search').on('keyup', function() {
-        var val = $(this).val().toLowerCase();
-        $('#audit-logs-table tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
-        });
-    });
-
-    $('#user-search').on('keyup', function() {
-        var val = $(this).val().toLowerCase();
-        $('#users-table tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
-        });
-    });
-
-    $('#role-filter').on('change', function() {
-        var val = $(this).val();
-        $('#users-table tbody tr').filter(function() {
-            if (!val) { $(this).show(); return; }
-            $(this).toggle($(this).data('role').indexOf(val) > -1);
-        });
-    });
-
-    $('.approve-request').on('click', function() {
-        var btn = $(this);
-        var requestId = btn.data('id');
-        if (!confirm('<?php _e('Are you sure?', 'board'); ?>')) return;
-        btn.prop('disabled', true).text('...');
-        $.post(board_ajax.ajax_url, { action: 'board_approve_request', nonce: board_ajax.nonce, request_id: requestId }, function(response) {
-            alert(response.data.message);
-            location.reload();
-        });
-    });
-
-    $('#open-add-program').on('click', function() { $('#add-program-section').slideDown(); });
-    $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
-
-    $('#program-search').on('keyup', function() {
-        var val = $(this).val().toLowerCase();
-        $('#admin-programs-grid .board-program-card').filter(function() {
-            $(this).toggle($(this).data('title').indexOf(val) > -1);
-        });
-    });
-
-    $('#board-save-program-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_program&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-            if(response.success) location.reload();
-        });
-    });
-
-    $('.delete-program').on('click', function() {
-        var id = $(this).data('id');
-        if (!confirm('<?php _e('Delete program?', 'board'); ?>')) return;
-        $.post(board_ajax.ajax_url, { action: 'board_delete_program', nonce: board_ajax.nonce, program_id: id }, function(response) {
-            alert(response.data.message);
-            location.reload();
-        });
-    });
-
-    $('#open-add-exam').on('click', function() { $('#add-exam-section').slideDown(); });
-    $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
-
-    $('#board-save-exam-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_exam&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-            if(response.success) location.reload();
-        });
-    });
-
-    $('#board-assign-exam-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_assign_exam&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-        });
-    });
-
-    $('#board-general-settings-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_general_settings&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-        });
-    });
-
-    $('#board-full-backup-json').on('click', function() {
-        var btn = $(this);
-        btn.prop('disabled', true).text('Generating...');
-        $.post(board_ajax.ajax_url, { action: 'board_export_json', nonce: board_ajax.nonce }, function(response) {
-            btn.prop('disabled', false).text('Full Backup (JSON)');
-            if (response.success) {
-                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data));
-                var downloadAnchorNode = document.createElement('a');
-                downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "gshb_backup.json");
-                document.body.appendChild(downloadAnchorNode);
-                downloadAnchorNode.click();
-                downloadAnchorNode.remove();
-            }
-        });
-    });
-
-    $('#board-advanced-settings-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_advanced_settings&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-        });
-    });
-
-    $('#board-design-settings-form').on('submit', function(e) {
-        e.preventDefault();
-        var formData = new FormData(this);
-        formData.append('action', 'board_save_design_settings');
-        formData.append('nonce', board_ajax.nonce);
-        $.ajax({
-            url: board_ajax.ajax_url,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                alert(response.data.message);
-                if(response.success) location.reload();
-            }
-        });
-    });
-
-    $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
-    $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
-
-    $('#cert-search').on('keyup', function() {
-        var val = $(this).val().toLowerCase();
-        $('#admin-certs-grid .board-program-card').filter(function() {
-            $(this).toggle($(this).data('title').indexOf(val) > -1);
-        });
-    });
-
-    $('#board-generate-cert-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_generate_certificate&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-            if(response.success) location.reload();
-        });
-    });
-
-    $('.revoke-cert').on('click', function() {
-        var id = $(this).data('id');
-        if (!confirm('<?php _e('Revoke this certificate?', 'board'); ?>')) return;
-        $.post(board_ajax.ajax_url, { action: 'board_revoke_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
-            alert(response.data.message);
-            location.reload();
-        });
-    });
-
-    $('.delete-cert').on('click', function() {
-        var id = $(this).data('id');
-        if (!confirm('<?php _e('Delete record?', 'board'); ?>')) return;
-        $.post(board_ajax.ajax_url, { action: 'board_delete_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
-            alert(response.data.message);
-            location.reload();
-        });
-    });
-
-    $('.quick-role-change').on('change', function() {
-        var id = $(this).data('id');
-        var role = $(this).val();
-        $.post(board_ajax.ajax_url, { action: 'board_update_user_role', nonce: board_ajax.nonce, user_id: id, role: role }, function(response) {
-            alert(response.data.message);
-        });
-    });
-
-    $('.quick-status-change').on('change', function() {
-        var id = $(this).data('id');
-        var status = $(this).val();
-        $.post(board_ajax.ajax_url, { action: 'board_update_user_status', nonce: board_ajax.nonce, user_id: id, status: status }, function(response) {
-            alert(response.data.message);
-        });
-    });
-
     $('#open-add-user').on('click', function() { $('#add-user-section').slideDown(); });
     $('#close-add-user').on('click', function() { $('#add-user-section').slideUp(); });
-
-    $('#board-add-user-form').on('submit', function(e) {
-        e.preventDefault();
-        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_add_user&nonce=' + board_ajax.nonce, function(response) {
-            alert(response.data.message);
-            if(response.success) location.reload();
-        });
-    });
-
-    $('.delete-user').on('click', function() {
-        var id = $(this).data('id');
-        if (!confirm('<?php _e('Delete this user? This action cannot be undone.', 'board'); ?>')) return;
-        $.post(board_ajax.ajax_url, { action: 'board_delete_user', nonce: board_ajax.nonce, user_id: id }, function(response) {
-            alert(response.data.message);
-            location.reload();
-        });
-    });
+    $('#open-add-program').on('click', function() { $('#add-program-section').slideDown(); });
+    $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
+    $('#open-add-exam').on('click', function() { $('#add-exam-section').slideDown(); });
+    $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
+    $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
+    $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
 });
 </script>

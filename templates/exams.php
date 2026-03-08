@@ -67,20 +67,27 @@ jQuery(document).ready(function($) {
     </div>
 
     <div style="max-width: 800px; margin: 0 auto;">
-        <div class="board-cp-header" style="margin-bottom: 20px;">
-            <div class="board-cp-logo"><?php _e('Assigned Exams', 'board'); ?></div>
+        <div class="board-cp-header" style="margin-bottom: 30px; border: 1px solid var(--board-black);">
+            <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px;">
+                <span class="dashicons dashicons-clipboard"></span>
+                <strong><?php _e('Assigned Exams', 'board'); ?></strong>
+            </div>
             <div class="board-cp-user"><?php echo $user->display_name; ?></div>
         </div>
 
         <?php if (!empty($assigned_exams)) : ?>
             <?php foreach ($assigned_exams as $exam) : ?>
-                <div class="board-program-card" style="margin-bottom: 20px; border-left: 5px solid var(--board-black);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="board-program-card" style="margin-bottom: 20px; border-left: 8px solid var(--board-black);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                         <div>
                             <h3 style="margin: 0;"><?php echo esc_html($exam['title']); ?></h3>
-                            <p style="margin: 5px 0;"><strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($exam['code']); ?> | <strong><?php _e('Due:', 'board'); ?></strong> <?php echo esc_html($exam['due']); ?></p>
+                            <p style="margin: 8px 0; font-size: 13px;">
+                                <strong style="text-transform: uppercase; font-size: 11px;"><?php _e('Exam Code:', 'board'); ?></strong> <code><?php echo esc_html($exam['code']); ?></code>
+                                <span style="margin: 0 10px; color: #ccc;">|</span>
+                                <strong style="text-transform: uppercase; font-size: 11px;"><?php _e('Due Date:', 'board'); ?></strong> <?php echo esc_html($exam['due']); ?>
+                            </p>
                         </div>
-                        <button class="board-btn-black start-exam" data-id="<?php echo $exam['id']; ?>" style="width: auto; padding: 10px 30px;"><?php _e('Start Exam', 'board'); ?></button>
+                        <button class="board-btn-black start-exam" data-id="<?php echo $exam['id']; ?>" style="width: auto; padding: 12px 40px;"><?php _e('Start Exam', 'board'); ?></button>
                     </div>
                 </div>
             <?php endforeach; ?>
