@@ -35,6 +35,7 @@ class Board {
     }
 
     private function init_hooks() {
+        add_action('init', array($this, 'add_rewrite_rules'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
         add_action('wp_head', array($this, 'inject_custom_css'), 100);
         add_action('template_redirect', array($this, 'enforce_page_access'));
@@ -63,6 +64,14 @@ class Board {
         ));
     }
 
+    public function add_rewrite_rules() {
+        add_rewrite_rule('^certificate/([^/]+)/?', 'index.php?board_cert_serial=$matches[1]', 'top');
+        add_filter('query_vars', function($vars) {
+            $vars[] = 'board_cert_serial';
+            return $vars;
+        });
+    }
+
     public function enforce_page_access() {
         if (is_admin()) return;
 
@@ -83,9 +92,30 @@ class Board {
             exit;
         }
 
-        if ((is_page('qb') || is_page('programs') || is_page('members') || is_page('verify')) && !is_user_logged_in()) {
+        if ((is_page('qb') || is_page('programs')) && !is_user_logged_in()) {
             wp_redirect(home_url('/registration'));
             exit;
+        }
+
+        // Handle Certificate Details Template
+        $cert_serial = get_query_var('board_cert_serial');
+        if ($cert_serial) {
+            $certs = get_posts(array(
+                'post_type' => 'board_certificate',
+                'meta_key' => 'serial_number',
+                'meta_value' => $cert_serial,
+                'posts_per_page' => 1
+            ));
+
+            if (!empty($certs)) {
+                $cert = $certs[0];
+                Board::log(__('Certificate Viewed', 'board'), sprintf(__('Certificate %s was viewed.', 'board'), $cert_serial));
+                include BOARD_PATH . 'templates/certificate-details.php';
+                exit;
+            } else {
+                wp_redirect(home_url('/verify?error=notfound'));
+                exit;
+            }
         }
     }
 

@@ -111,9 +111,9 @@ class Board_Auth {
 
     public function handle_verification() {
         check_ajax_referer('board_nonce', 'nonce');
-
         $code = sanitize_text_field($_POST['verify_code']);
 
+        // 1. Check User Membership Codes
         $users = get_users(array(
             'meta_key' => 'verification_code',
             'meta_value' => $code,
@@ -123,18 +123,44 @@ class Board_Auth {
         if (!empty($users)) {
             $user = $users[0];
             $expiry = get_user_meta($user->ID, 'membership_expiry_date', true);
-            $is_active = (strtotime($expiry) > time());
+            $is_active = (!$expiry || strtotime($expiry) > time());
 
             wp_send_json_success(array(
                 'valid' => true,
                 'is_active' => $is_active,
                 'name' => $user->display_name,
-                'specialty' => get_user_meta($user->ID, 'specialty', true),
-                'expiry' => $expiry
+                'type' => __('Certified Membership', 'board'),
+                'specialty' => get_user_meta($user->ID, 'specialty', true) ?: 'N/A',
+                'expiry' => $expiry ?: __('Never', 'board')
             ));
-        } else {
-            wp_send_json_error(array('message' => __('Invalid verification code.', 'board')));
         }
+
+        // 2. Check Certificate Serial Numbers
+        $certs = get_posts(array(
+            'post_type' => 'board_certificate',
+            'meta_key' => 'serial_number',
+            'meta_value' => $code,
+            'posts_per_page' => 1
+        ));
+
+        if (!empty($certs)) {
+            $cert = $certs[0];
+            $uid = get_post_meta($cert->ID, 'user_id', true);
+            $user = get_userdata($uid);
+            $status = get_post_meta($cert->ID, 'cert_status', true);
+
+            wp_send_json_success(array(
+                'valid' => true,
+                'is_active' => ($status === 'active'),
+                'name' => $user ? $user->display_name : 'Unknown',
+                'type' => get_post_meta($cert->ID, 'cert_type', true),
+                'specialty' => get_user_meta($uid, 'specialty', true) ?: 'N/A',
+                'expiry' => __('N/A', 'board'),
+                'url' => home_url("/certificate/{$code}")
+            ));
+        }
+
+        wp_send_json_error(array('message' => __('Invalid verification code.', 'board')));
     }
 
     public function handle_exam_submission() {

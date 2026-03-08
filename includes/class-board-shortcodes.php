@@ -17,6 +17,7 @@ class Board_Shortcodes {
         add_shortcode('board_cm_request', array($this, 'render_cm_request'));
         add_shortcode('board_members', array($this, 'render_members'));
         add_shortcode('board_programs', array($this, 'render_programs'));
+        add_shortcode('gshb_certificate', array($this, 'render_single_certificate'));
     }
 
     public function render_info() {
@@ -67,6 +68,34 @@ class Board_Shortcodes {
 
     public function render_programs() {
         return $this->load_template('programs.php');
+    }
+
+    public function render_single_certificate($atts) {
+        $a = shortcode_atts(array(
+            'id' => '',
+            'serial' => ''
+        ), $atts);
+
+        $query_args = array(
+            'post_type' => 'board_certificate',
+            'posts_per_page' => 1
+        );
+
+        if (!empty($a['id'])) {
+            $query_args['p'] = intval($a['id']);
+        } elseif (!empty($a['serial'])) {
+            $query_args['meta_key'] = 'serial_number';
+            $query_args['meta_value'] = sanitize_text_field($a['serial']);
+        } else {
+            return '<p>' . __('Please provide a certificate ID or Serial Number.', 'board') . '</p>';
+        }
+
+        $certs = get_posts($query_args);
+        if (empty($certs)) {
+            return '<p>' . __('Certificate not found.', 'board') . '</p>';
+        }
+
+        return $this->load_template('certificate-card.php', array('cert' => $certs[0]));
     }
 
     private function load_template($template_name, $args = array()) {

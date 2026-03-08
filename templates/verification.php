@@ -46,11 +46,13 @@ jQuery(document).ready(function($) {
             btn.prop('disabled', false).text('<?php _e('Verify Document', 'board'); ?>');
             $('#verify-result').show();
             if (response.success && response.data.valid) {
-                var status = response.data.is_active ? '<span style="color: green; font-weight: bold;">✔ <?php _e('Valid', 'board'); ?></span>' : '<span style="color: grey; font-weight: bold;">✘ <?php _e('Expired', 'board'); ?></span>';
+                var status = response.data.is_active ? '<span style="color: green; font-weight: bold;">✔ <?php _e('Valid', 'board'); ?></span>' : '<span style="color: grey; font-weight: bold;">✘ <?php _e('Expired / Invalid', 'board'); ?></span>';
                 var html = '<p><strong><?php _e('Status:', 'board'); ?></strong> ' + status + '</p>' +
                            '<p><strong><?php _e('Holder:', 'board'); ?></strong> ' + response.data.name + '</p>' +
+                           '<p><strong><?php _e('Type:', 'board'); ?></strong> ' + response.data.type + '</p>' +
                            '<p><strong><?php _e('Specialty:', 'board'); ?></strong> ' + response.data.specialty + '</p>' +
                            '<p><strong><?php _e('Expires:', 'board'); ?></strong> ' + response.data.expiry + '</p>';
+                if (response.data.url) html += '<a href="' + response.data.url + '" class="board-btn-black" style="display:inline-block; margin-top:10px; text-decoration:none; width:auto;"><?php _e('View Digital Certificate', 'board'); ?></a>';
                 $('#verify-content').html(html);
             } else {
                 $('#verify-content').html('<p style="color: red; font-weight: bold;">✘ ' + (response.data.message || '<?php _e('Invalid or Expired Code', 'board'); ?>') + '</p><p><?php _e('Please check the code and try again.', 'board'); ?></p>');

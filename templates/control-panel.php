@@ -223,7 +223,33 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'exams') : ?>
-            <h3><?php _e('Manage Exams', 'board'); ?></h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Manage Exams', 'board'); ?></h3>
+                <button class="board-btn-black" id="open-add-exam" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Create Exam', 'board'); ?></button>
+            </div>
+
+            <!-- Add Exam Form -->
+            <div id="add-exam-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
+                <h4><?php _e('Create New Exam', 'board'); ?></h4>
+                <form id="board-save-exam-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="board-form-field"><input type="text" name="title" placeholder="Exam Title" required></div>
+                        <div class="board-form-field"><input type="text" name="exam_code" placeholder="Exam Code" required></div>
+                        <div class="board-form-field">
+                            <select name="program_id">
+                                <option value=""><?php _e('Link to Program (Optional)', 'board'); ?></option>
+                                <?php foreach($progs as $p) echo "<option value='{$p->ID}'>{$p->post_title}</option>"; ?>
+                            </select>
+                        </div>
+                        <div class="board-form-field"><input type="date" name="exam_due"></div>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Exam', 'board'); ?></button>
+                    <button type="button" id="close-add-exam" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                </form>
+            </div>
+
+            <hr>
+            <h3><?php _e('Assign Exams to Users', 'board'); ?></h3>
             <form id="board-assign-exam-form" style="margin-bottom: 30px;">
                 <div class="board-form-field">
                     <select name="user_id" required>
@@ -333,13 +359,79 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'verification') : ?>
-            <h3><?php _e('Verification System', 'board'); ?></h3>
-            <p><?php _e('Manage codes and search permissions here.', 'board'); ?></p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Verification Management', 'board'); ?></h3>
+                <input type="text" id="verify-mgmt-search" placeholder="<?php _e('Search codes...', 'board'); ?>" style="padding: 8px; border: 1px solid var(--board-black);">
+            </div>
+
+            <table class="board-table" id="verify-mgmt-table">
+                <thead>
+                    <tr>
+                        <th><?php _e('Code', 'board'); ?></th>
+                        <th><?php _e('Assigned To', 'board'); ?></th>
+                        <th><?php _e('Type', 'board'); ?></th>
+                        <th><?php _e('Status', 'board'); ?></th>
+                        <th><?php _e('Action', 'board'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    // Membership Codes
+                    $mem_users = get_users(array('meta_key' => 'verification_code'));
+                    foreach ($mem_users as $u) :
+                        $code = get_user_meta($u->ID, 'verification_code', true);
+                        $status = get_user_meta($u->ID, 'membership_status', true) ?: 'active';
+                        ?>
+                        <tr>
+                            <td><code><?php echo esc_html($code); ?></code></td>
+                            <td><?php echo esc_html($u->display_name); ?></td>
+                            <td><?php _e('Membership', 'board'); ?></td>
+                            <td><span style="text-transform: capitalize;"><?php echo $status; ?></span></td>
+                            <td><button class="board-btn-black update-verify-status" data-type="user" data-id="<?php echo $u->ID; ?>" style="width: auto; padding: 3px 8px; font-size: 10px; background: grey;"><?php _e('Invalidate', 'board'); ?></button></td>
+                        </tr>
+                    <?php endforeach; ?>
+
+                    <?php
+                    // Certificate Codes
+                    $cert_posts = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
+                    foreach ($cert_posts as $c) :
+                        $code = get_post_meta($c->ID, 'serial_number', true);
+                        $status = get_post_meta($c->ID, 'cert_status', true) ?: 'active';
+                        $uid = get_post_meta($c->ID, 'user_id', true);
+                        $uinfo = get_userdata($uid);
+                        ?>
+                        <tr>
+                            <td><code><?php echo esc_html($code); ?></code></td>
+                            <td><?php echo $uinfo ? esc_html($uinfo->display_name) : 'Unknown'; ?></td>
+                            <td><?php echo get_post_meta($c->ID, 'cert_type', true); ?></td>
+                            <td><span style="text-transform: capitalize;"><?php echo $status; ?></span></td>
+                            <td><button class="board-btn-black update-verify-status" data-type="cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 3px 8px; font-size: 10px; background: grey;"><?php _e('Revoke', 'board'); ?></button></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         <?php endif; ?>
 
         <?php if ($tab == 'reports') : ?>
-            <h3><?php _e('System Reports', 'board'); ?></h3>
-            <button class="board-btn-black" style="width: auto;"><?php _e('Export All Data (CSV)', 'board'); ?></button>
+            <h3><?php _e('System Analytics & Reports', 'board'); ?></h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                <div class="board-program-card">
+                    <h4><?php _e('Program Engagement', 'board'); ?></h4>
+                    <p style="font-size: 13px;"><?php _e('Total enrollments and completion rates across all professional courses.', 'board'); ?></p>
+                </div>
+                <div class="board-program-card">
+                    <h4><?php _e('Certification Growth', 'board'); ?></h4>
+                    <p style="font-size: 13px;"><?php _e('Monthly trend of new certified members and issued diplomas.', 'board'); ?></p>
+                </div>
+            </div>
+            <div style="background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black);">
+                <h4><?php _e('Data Export', 'board'); ?></h4>
+                <p style="font-size: 14px; margin-bottom: 15px;"><?php _e('Download comprehensive system data for auditing and performance tracking.', 'board'); ?></p>
+                <div style="display: flex; gap: 10px;">
+                    <a href="<?php echo admin_url('admin-post.php?action=board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px;"><?php _e('Users Report', 'board'); ?></a>
+                    <a href="<?php echo admin_url('admin-post.php?action=board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px; background: grey;"><?php _e('Certificates Report', 'board'); ?></a>
+                </div>
+            </div>
         <?php endif; ?>
 
         <?php if ($tab == 'logs') : ?>
@@ -503,6 +595,30 @@ $user = wp_get_current_user();
 
 <script>
 jQuery(document).ready(function($) {
+    $('#verify-mgmt-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        $('#verify-mgmt-table tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+        });
+    });
+
+    $('.update-verify-status').on('click', function() {
+        var btn = $(this);
+        var type = btn.data('type');
+        var id = btn.data('id');
+        if (!confirm('<?php _e('Invalidate this record?', 'board'); ?>')) return;
+
+        if (type === 'cert') {
+            $.post(board_ajax.ajax_url, { action: 'board_revoke_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
+                alert(response.data.message); location.reload();
+            });
+        } else {
+            $.post(board_ajax.ajax_url, { action: 'board_update_user_status', nonce: board_ajax.nonce, user_id: id, status: 'suspended' }, function(response) {
+                alert(response.data.message); location.reload();
+            });
+        }
+    });
+
     $('#log-search').on('keyup', function() {
         var val = $(this).val().toLowerCase();
         $('#audit-logs-table tbody tr').filter(function() {
@@ -560,6 +676,17 @@ jQuery(document).ready(function($) {
         $.post(board_ajax.ajax_url, { action: 'board_delete_program', nonce: board_ajax.nonce, program_id: id }, function(response) {
             alert(response.data.message);
             location.reload();
+        });
+    });
+
+    $('#open-add-exam').on('click', function() { $('#add-exam-section').slideDown(); });
+    $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
+
+    $('#board-save-exam-form').on('submit', function(e) {
+        e.preventDefault();
+        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_exam&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+            if(response.success) location.reload();
         });
     });
 

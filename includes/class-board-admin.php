@@ -9,6 +9,7 @@ class Board_Admin {
     public function __construct() {
         add_action('wp_ajax_board_approve_request', array($this, 'handle_approval'));
         add_action('wp_ajax_board_save_general_settings', array($this, 'handle_save_general_settings'));
+        add_action('wp_ajax_board_save_exam', array($this, 'handle_save_exam'));
         add_action('wp_ajax_board_save_design_settings', array($this, 'handle_save_design_settings'));
         add_action('wp_ajax_board_save_advanced_settings', array($this, 'handle_save_advanced_settings'));
         add_action('wp_ajax_board_export_json', array($this, 'handle_export_json'));
@@ -260,6 +261,34 @@ class Board_Admin {
         }
         fclose($output);
         exit;
+    }
+
+    public function handle_save_exam() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+
+        $title = sanitize_text_field($_POST['title']);
+        $code = sanitize_text_field($_POST['exam_code']);
+        $pid = intval($_POST['program_id']);
+        $due = sanitize_text_field($_POST['exam_due']);
+
+        $post_id = wp_insert_post(array(
+            'post_title' => $title,
+            'post_status' => 'publish',
+            'post_type' => 'board_exam',
+            'meta_input' => array(
+                'exam_code' => $code,
+                'program_id' => $pid,
+                'exam_due' => $due
+            )
+        ));
+
+        if (is_wp_error($post_id)) {
+            wp_send_json_error(array('message' => $post_id->get_error_message()));
+        } else {
+            Board::log(__('Exam Created', 'board'), sprintf(__('Exam %s created.', 'board'), $title), get_current_user_id());
+            wp_send_json_success(array('message' => __('Exam saved.', 'board')));
+        }
     }
 
     public function handle_save_program() {
