@@ -16,7 +16,7 @@ class Board_CPT {
             'labels'      => array('name' => __('Programs', 'board')),
             'public'      => true,
             'has_archive' => true,
-            'supports'    => array('title', 'editor', 'thumbnail'),
+            'supports'    => array('title', 'editor', 'thumbnail', 'excerpt'),
             'show_in_rest' => true,
             'show_in_menu' => false
         ));

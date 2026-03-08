@@ -9,6 +9,7 @@ class Board_Admin {
     public function __construct() {
         add_action('wp_ajax_board_approve_request', array($this, 'handle_approval'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
+        add_action('wp_ajax_board_delete_program', array($this, 'handle_delete_program'));
         add_action('wp_ajax_board_assign_exam', array($this, 'handle_assign_exam'));
         add_action('wp_ajax_board_update_user_role', array($this, 'handle_update_role'));
         add_action('wp_ajax_board_update_user_status', array($this, 'handle_update_status'));
@@ -16,7 +17,31 @@ class Board_Admin {
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
         add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
+        add_action('admin_post_board_export_programs', array($this, 'handle_export_programs'));
         add_action('admin_post_board_import_users', array($this, 'handle_import_users'));
+    }
+
+    public function handle_export_programs() {
+        if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=gshb_programs_export.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('ID', 'Title', 'Code', 'Type', 'Duration', 'Status'));
+
+        $progs = get_posts(array('post_type' => 'board_program', 'posts_per_page' => -1));
+        foreach ($progs as $p) {
+            fputcsv($output, array(
+                $p->ID,
+                $p->post_title,
+                get_post_meta($p->ID, 'program_code', true),
+                get_post_meta($p->ID, 'program_type', true),
+                get_post_meta($p->ID, 'program_duration', true),
+                get_post_status($p->ID)
+            ));
+        }
+        fclose($output);
+        exit;
     }
 
     public function handle_add_user() {
@@ -177,13 +202,19 @@ class Board_Admin {
         $title = sanitize_text_field($_POST['title']);
         $desc = sanitize_textarea_field($_POST['desc']);
         $code = sanitize_text_field($_POST['code']);
+        $type = sanitize_text_field($_POST['type']);
+        $duration = sanitize_text_field($_POST['duration']);
 
         $post_id = wp_insert_post(array(
             'post_title' => $title,
             'post_content' => $desc,
             'post_status' => 'publish',
             'post_type' => 'board_program',
-            'meta_input' => array('program_code' => $code)
+            'meta_input' => array(
+                'program_code' => $code,
+                'program_type' => $type,
+                'program_duration' => $duration
+            )
         ));
 
         if (is_wp_error($post_id)) {
@@ -191,6 +222,18 @@ class Board_Admin {
         } else {
             Board::log(__('Program Created', 'board'), sprintf(__('Program %s created.', 'board'), $title), get_current_user_id());
             wp_send_json_success(array('message' => __('Program saved.', 'board')));
+        }
+    }
+
+    public function handle_delete_program() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['program_id']);
+        if (wp_delete_post($id)) {
+            Board::log(__('Program Deleted', 'board'), sprintf(__('Program ID %d deleted.', 'board'), $id), get_current_user_id());
+            wp_send_json_success(array('message' => __('Program deleted.', 'board')));
+        } else {
+            wp_send_json_error();
         }
     }
 

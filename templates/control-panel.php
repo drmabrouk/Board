@@ -146,27 +146,67 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'programs') : ?>
-            <h3><?php _e('Manage Programs', 'board'); ?></h3>
-            <form id="board-save-program-form" style="margin-bottom: 30px;">
-                <div class="board-form-field"><input type="text" name="title" placeholder="Program Title" required></div>
-                <div class="board-form-field"><input type="text" name="code" placeholder="Program Code" required></div>
-                <div class="board-form-field"><textarea name="desc" placeholder="Program Description"></textarea></div>
-                <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
-            </form>
-            <table class="board-table">
-                <thead><tr><th><?php _e('Title', 'board'); ?></th><th><?php _e('Code', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
-                <tbody>
-                    <?php
-                    $progs = get_posts(array('post_type' => 'board_program'));
-                    foreach ($progs as $p) : ?>
-                        <tr>
-                            <td><?php echo $p->post_title; ?></td>
-                            <td><?php echo get_post_meta($p->ID, 'program_code', true); ?></td>
-                            <td><a href="#" style="color: red;"><?php _e('Delete', 'board'); ?></a></td>
-                        </tr>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Manage Programs', 'board'); ?></h3>
+                <div style="display: flex; gap: 10px;">
+                    <a href="<?php echo admin_url('admin-post.php?action=board_export_programs'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Programs', 'board'); ?></a>
+                    <button class="board-btn-black" id="open-add-program" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add New Program', 'board'); ?></button>
+                </div>
+            </div>
+
+            <!-- Add Program Form -->
+            <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
+                <h4><?php _e('Create Program', 'board'); ?></h4>
+                <form id="board-save-program-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="board-form-field"><input type="text" name="title" placeholder="Program Title" required></div>
+                        <div class="board-form-field"><input type="text" name="code" placeholder="Program Code" required></div>
+                        <div class="board-form-field">
+                            <select name="type" required>
+                                <option value="Course"><?php _e('Course', 'board'); ?></option>
+                                <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                                <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                            </select>
+                        </div>
+                        <div class="board-form-field"><input type="text" name="duration" placeholder="Duration (e.g., 6 Months)"></div>
+                    </div>
+                    <div class="board-form-field"><textarea name="desc" placeholder="Program Description"></textarea></div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
+                    <button type="button" id="close-add-program" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                </form>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="program-search" placeholder="<?php _e('Search programs...', 'board'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--board-black);">
+            </div>
+
+            <div class="board-programs-grid" id="admin-programs-grid" style="padding: 0;">
+                <?php
+                $progs = get_posts(array('post_type' => 'board_program', 'posts_per_page' => -1));
+                if (!empty($progs)) :
+                    foreach ($progs as $p) :
+                        $code = get_post_meta($p->ID, 'program_code', true);
+                        $type = get_post_meta($p->ID, 'program_type', true) ?: 'Course';
+                        $duration = get_post_meta($p->ID, 'program_duration', true) ?: 'N/A';
+                        $status = get_post_status($p->ID);
+                        ?>
+                        <div class="board-program-card" data-title="<?php echo strtolower($p->post_title); ?>">
+                            <h4><?php echo $p->post_title; ?></h4>
+                            <p style="font-size: 12px; margin-bottom: 10px;">
+                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo $type; ?> |
+                                <strong><?php _e('Code:', 'board'); ?></strong> <?php echo $code; ?>
+                            </p>
+                            <p style="font-size: 13px;"><?php echo wp_trim_words($p->post_content, 15); ?></p>
+                            <div style="margin-top: 15px; display: flex; gap: 5px;">
+                                <button class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 10px;"><?php _e('Edit', 'board'); ?></button>
+                                <button class="board-btn-black delete-program" data-id="<?php echo $p->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
+                <?php else : ?>
+                    <p><?php _e('No programs found.', 'board'); ?></p>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
 
         <?php if ($tab == 'exams') : ?>
@@ -316,9 +356,28 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $('#open-add-program').on('click', function() { $('#add-program-section').slideDown(); });
+    $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
+
+    $('#program-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        $('#admin-programs-grid .board-program-card').filter(function() {
+            $(this).toggle($(this).data('title').indexOf(val) > -1);
+        });
+    });
+
     $('#board-save-program-form').on('submit', function(e) {
         e.preventDefault();
         $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_program&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+            if(response.success) location.reload();
+        });
+    });
+
+    $('.delete-program').on('click', function() {
+        var id = $(this).data('id');
+        if (!confirm('<?php _e('Delete program?', 'board'); ?>')) return;
+        $.post(board_ajax.ajax_url, { action: 'board_delete_program', nonce: board_ajax.nonce, program_id: id }, function(response) {
             alert(response.data.message);
             location.reload();
         });
