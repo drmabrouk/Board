@@ -33,6 +33,7 @@ class Board_Admin {
         if (is_wp_error($post_id)) {
             wp_send_json_error(array('message' => $post_id->get_error_message()));
         } else {
+            Board::log(__('Program Created', 'board'), sprintf(__('Program %s created.', 'board'), $title));
             wp_send_json_success(array('message' => __('Program saved.', 'board')));
         }
     }
@@ -92,6 +93,14 @@ class Board_Admin {
             'ID' => $request_id,
             'post_status' => 'private' // Hide approved requests
         ));
+
+        Board::log(__('Membership Approved', 'board'), sprintf(__('User %d approved for certified membership.', $user_id)), get_current_user_id());
+
+        // Send Email Notification
+        $to = $user->user_email;
+        $subject = __('Certified Membership Approved - GSHB', 'board');
+        $body = sprintf(__('Hello %s, your certified membership application has been approved. Your verification code is: %s', 'board'), $user->display_name, $verify_code);
+        wp_mail($to, $subject, $body);
 
         wp_send_json_success(array(
             'message' => __('Membership approved and user upgraded.', 'board'),

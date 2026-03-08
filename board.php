@@ -36,6 +36,7 @@ class Board {
 
     private function init_hooks() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
+        add_action('template_redirect', array($this, 'enforce_page_access'));
 
         // Initialize components
         new Board_Roles();
@@ -45,6 +46,46 @@ class Board {
         new Board_CPT();
         new Board_Admin();
         new Board_Cron();
+    }
+
+    public static function log($title, $message = '', $user_id = 0) {
+        if (!$user_id) $user_id = get_current_user_id();
+
+        wp_insert_post(array(
+            'post_title'   => $title,
+            'post_content' => $message,
+            'post_status'  => 'publish',
+            'post_type'    => 'board_log',
+            'meta_input'   => array(
+                'user_id' => $user_id
+            )
+        ));
+    }
+
+    public function enforce_page_access() {
+        if (is_admin()) return;
+
+        $current_user_id = get_current_user_id();
+
+        if (is_page('cp') && !Board_Roles::can_access_cp($current_user_id)) {
+            wp_redirect(home_url('/registration'));
+            exit;
+        }
+
+        if (is_page('mb') && !Board_Roles::can_access_mb($current_user_id)) {
+            wp_redirect(home_url('/registration'));
+            exit;
+        }
+
+        if (is_page('cm-request') && !Board_Roles::is_member($current_user_id)) {
+            wp_redirect(home_url('/registration'));
+            exit;
+        }
+
+        if ((is_page('qb') || is_page('programs') || is_page('members') || is_page('verify')) && !is_user_logged_in()) {
+            wp_redirect(home_url('/registration'));
+            exit;
+        }
     }
 
     public function enqueue_assets() {

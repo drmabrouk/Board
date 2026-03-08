@@ -34,14 +34,28 @@ jQuery(document).ready(function($) {
     $('#board-verify-form').on('submit', function(e) {
         e.preventDefault();
         var code = $('#verify_code').val();
+        var btn = $(this).find('button');
 
-        // Simulating verification logic for now
-        $('#verify-result').show();
-        if (code === 'GSHB-VALID') {
-            $('#verify-content').html('<p style="color: green; font-weight: bold;">✔ Valid Document</p><p><strong>Holder:</strong> John Doe</p><p><strong>Type:</strong> Certified Membership</p><p><strong>Expires:</strong> 2025-12-31</p>');
-        } else {
-            $('#verify-content').html('<p style="color: red; font-weight: bold;">✘ Invalid or Expired Code</p><p>Please check the code and try again.</p>');
-        }
+        btn.prop('disabled', true).text('Verifying...');
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_verify_document',
+            nonce: board_ajax.nonce,
+            verify_code: code
+        }, function(response) {
+            btn.prop('disabled', false).text('<?php _e('Verify Document', 'board'); ?>');
+            $('#verify-result').show();
+            if (response.success && response.data.valid) {
+                var status = response.data.is_active ? '<span style="color: green; font-weight: bold;">✔ <?php _e('Valid', 'board'); ?></span>' : '<span style="color: grey; font-weight: bold;">✘ <?php _e('Expired', 'board'); ?></span>';
+                var html = '<p><strong><?php _e('Status:', 'board'); ?></strong> ' + status + '</p>' +
+                           '<p><strong><?php _e('Holder:', 'board'); ?></strong> ' + response.data.name + '</p>' +
+                           '<p><strong><?php _e('Specialty:', 'board'); ?></strong> ' + response.data.specialty + '</p>' +
+                           '<p><strong><?php _e('Expires:', 'board'); ?></strong> ' + response.data.expiry + '</p>';
+                $('#verify-content').html(html);
+            } else {
+                $('#verify-content').html('<p style="color: red; font-weight: bold;">✘ ' + (response.data.message || '<?php _e('Invalid or Expired Code', 'board'); ?>') + '</p><p><?php _e('Please check the code and try again.', 'board'); ?></p>');
+            }
+        });
     });
 });
 </script>

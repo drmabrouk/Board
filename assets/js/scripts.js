@@ -29,7 +29,9 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     alert(response.data.message);
-                    if (action !== 'board_reset') {
+                    if (response.data.redirect) {
+                        window.location.href = response.data.redirect;
+                    } else if (action !== 'board_reset') {
                         window.location.reload();
                     } else {
                         form.find('button').prop('disabled', false).text('Send Link');

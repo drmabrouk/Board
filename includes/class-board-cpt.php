@@ -40,5 +40,15 @@ class Board_CPT {
             'show_in_rest' => false,
             'menu_icon'   => 'dashicons-email-alt'
         ));
+
+        // Activity Logs
+        register_post_type('board_log', array(
+            'labels'      => array('name' => __('Activity Logs', 'board')),
+            'public'      => false,
+            'show_ui'     => true,
+            'supports'    => array('title', 'editor'),
+            'show_in_rest' => false,
+            'menu_icon'   => 'dashicons-list-view'
+        ));
     }
 }

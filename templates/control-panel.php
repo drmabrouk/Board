@@ -38,6 +38,7 @@ $user = wp_get_current_user();
             <?php endif; ?>
 
             <li><a href="?cp_tab=verification"><?php _e('Verification System', 'board'); ?></a></li>
+            <li><a href="?cp_tab=logs"><?php _e('Activity Logs', 'board'); ?></a></li>
             <li><a href="?cp_tab=settings"><?php _e('Settings', 'board'); ?></a></li>
         </ul>
     </aside>
@@ -102,6 +103,66 @@ $user = wp_get_current_user();
                         <tr>
                             <td colspan="4" style="text-align: center;"><?php _e('No pending requests.', 'board'); ?></td>
                         </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <?php if ($tab == 'logs') : ?>
+            <h3><?php _e('Activity Logs', 'board'); ?></h3>
+            <table class="board-table">
+                <thead>
+                    <tr>
+                        <th><?php _e('Date', 'board'); ?></th>
+                        <th><?php _e('Action', 'board'); ?></th>
+                        <th><?php _e('Details', 'board'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $logs = get_posts(array('post_type' => 'board_log', 'posts_per_page' => 20));
+                    if (!empty($logs)) :
+                        foreach ($logs as $log) : ?>
+                            <tr>
+                                <td><?php echo get_the_date('Y-m-d H:i', $log->ID); ?></td>
+                                <td><?php echo $log->post_title; ?></td>
+                                <td><?php echo $log->post_content; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="3" style="text-align: center;"><?php _e('No logs found.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <?php if ($tab == 'verification') : ?>
+            <h3><?php _e('Verification Management', 'board'); ?></h3>
+            <table class="board-table">
+                <thead>
+                    <tr>
+                        <th><?php _e('User', 'board'); ?></th>
+                        <th><?php _e('Verification Code', 'board'); ?></th>
+                        <th><?php _e('Status', 'board'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $certified = get_users(array('role' => 'certified_member'));
+                    if (!empty($certified)) :
+                        foreach ($certified as $u) :
+                            $code = get_user_meta($u->ID, 'verification_code', true);
+                            $expiry = get_user_meta($u->ID, 'membership_expiry_date', true);
+                            $is_active = (strtotime($expiry) > time());
+                            ?>
+                            <tr>
+                                <td><?php echo $u->display_name; ?></td>
+                                <td><code><?php echo $code; ?></code></td>
+                                <td><?php echo $is_active ? __('Active', 'board') : __('Expired', 'board'); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="3" style="text-align: center;"><?php _e('No certified members found.', 'board'); ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

@@ -46,6 +46,34 @@ $user = wp_get_current_user();
                 </p>
             </div>
 
+            <h3><?php _e('Exam Results', 'board'); ?></h3>
+            <table class="board-table" style="margin-bottom: 30px;">
+                <thead>
+                    <tr>
+                        <th><?php _e('Exam', 'board'); ?></th>
+                        <th><?php _e('Date', 'board'); ?></th>
+                        <th><?php _e('Score', 'board'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $completed = get_user_meta($user->ID, 'completed_exams', true);
+                    if (!empty($completed)) :
+                        foreach ($completed as $res) :
+                            $exam_title = get_the_title($res['exam_id']);
+                            ?>
+                            <tr>
+                                <td><?php echo $exam_title; ?></td>
+                                <td><?php echo $res['date']; ?></td>
+                                <td><?php echo $res['score']; ?>%</td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="3" style="text-align: center;"><?php _e('No exams completed yet.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
             <h3><?php _e('Recent Requests', 'board'); ?></h3>
             <table class="board-table">
                 <thead>
@@ -57,9 +85,24 @@ $user = wp_get_current_user();
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td colspan="4" style="text-align: center;"><?php _e('No active requests.', 'board'); ?></td>
-                    </tr>
+                    <?php
+                    $requests = get_posts(array(
+                        'post_type' => 'board_request',
+                        'meta_key'  => 'user_id',
+                        'meta_value' => $user->ID
+                    ));
+                    if (!empty($requests)) :
+                        foreach ($requests as $req) : ?>
+                            <tr>
+                                <td>#<?php echo $req->ID; ?></td>
+                                <td><?php _e('Membership', 'board'); ?></td>
+                                <td><?php echo get_the_date('', $req->ID); ?></td>
+                                <td><?php echo ucfirst(get_post_meta($req->ID, 'status', true)); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="4" style="text-align: center;"><?php _e('No active requests.', 'board'); ?></td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </main>
