@@ -32,8 +32,9 @@ if (!empty($users_query)) {
         <p><?php _e('List of globally approved GSHB certified members.', 'board'); ?></p>
     </div>
 
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="directory-search" placeholder="<?php _e('Search by name, ID or specialty...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+    <div style="margin-bottom: 30px; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; text-align: left;"><?php _e('Search Directory', 'board'); ?></label>
+        <input type="text" id="directory-search" placeholder="<?php _e('Search by name, ID or specialty...', 'board'); ?>" style="width: 100%; padding: 15px; border: 1px solid var(--board-black);">
     </div>
 
     <table class="board-table" id="directory-table">
@@ -74,13 +75,3 @@ if (!empty($users_query)) {
     </table>
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-    $('#directory-search').on('keyup', function() {
-        var value = $(this).val().toLowerCase();
-        $('#directory-table tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-        });
-    });
-});
-</script>

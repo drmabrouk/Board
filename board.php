@@ -134,7 +134,8 @@ class Board {
     }
 
     public function enqueue_assets() {
-        wp_enqueue_style('board-style', BOARD_URL . 'assets/css/style.css', array(), '1.0.0');
+        wp_enqueue_style('dashicons');
+        wp_enqueue_style('board-style', BOARD_URL . 'assets/css/style.css', array('dashicons'), '1.0.0');
         wp_enqueue_script('board-scripts', BOARD_URL . 'assets/js/scripts.js', array('jquery'), '1.0.0', true);
 
         wp_localize_script('board-scripts', 'board_ajax', array(

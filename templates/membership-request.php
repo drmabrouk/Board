@@ -14,34 +14,39 @@ if (!defined('ABSPATH')) {
         <form id="board-membership-form">
             <div id="cm-request-steps">
                 <div class="cm-step" id="step-1">
-                    <h3><?php _e('Step 1: Personal Details', 'board'); ?></h3>
+                    <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;"><?php _e('Step 1: Personal Details', 'board'); ?></h3>
                     <div class="board-form-field">
-                        <input type="text" name="full_name" placeholder="<?php _e('Full Name', 'board'); ?>" required>
+                        <label><?php _e('Full Name', 'board'); ?></label>
+                        <input type="text" name="full_name" placeholder="e.g., John Doe" required>
                     </div>
                     <div class="board-form-field">
-                        <input type="text" name="country" placeholder="<?php _e('Country', 'board'); ?>" required>
+                        <label><?php _e('Country of Residence', 'board'); ?></label>
+                        <input type="text" name="country" placeholder="e.g., United Kingdom" required>
                     </div>
-                    <button type="button" class="board-btn-black next-step" data-next="2"><?php _e('Next Step', 'board'); ?></button>
+                    <button type="button" class="board-btn-black next-step" data-next="2" style="width: auto; padding: 12px 40px;"><?php _e('Next Step', 'board'); ?></button>
                 </div>
 
                 <div class="cm-step" id="step-2" style="display: none;">
-                    <h3><?php _e('Step 2: Professional Information', 'board'); ?></h3>
+                    <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;"><?php _e('Step 2: Professional Information', 'board'); ?></h3>
                     <div class="board-form-field">
-                        <input type="text" name="specialty" placeholder="<?php _e('Specialty', 'board'); ?>" required>
+                        <label><?php _e('Medical Specialty / Field', 'board'); ?></label>
+                        <input type="text" name="specialty" placeholder="e.g., Sports Medicine" required>
                     </div>
                     <div class="board-form-field">
-                        <input type="text" name="institution" placeholder="<?php _e('Institution', 'board'); ?>" required>
+                        <label><?php _e('Current Institution / Clinic', 'board'); ?></label>
+                        <input type="text" name="institution" placeholder="e.g., General Hospital" required>
                     </div>
-                    <button type="button" class="board-btn-black next-step" data-next="3"><?php _e('Next Step', 'board'); ?></button>
+                    <button type="button" class="board-btn-black next-step" data-next="3" style="width: auto; padding: 12px 40px;"><?php _e('Next Step', 'board'); ?></button>
                 </div>
 
                 <div class="cm-step" id="step-3" style="display: none;">
-                    <h3><?php _e('Step 3: Document Upload', 'board'); ?></h3>
-                    <p><?php _e('Please upload your CV and professional certificates (PDF or JPG).', 'board'); ?></p>
+                    <h3 style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;"><?php _e('Step 3: Document Upload', 'board'); ?></h3>
+                    <p style="font-size: 14px; margin-bottom: 20px; color: var(--board-grey-dark);"><?php _e('Please upload your professional CV and relevant certifications. Supported formats: PDF, JPG, PNG.', 'board'); ?></p>
                     <div class="board-form-field">
-                        <input type="file" name="documents[]" multiple>
+                        <label><?php _e('Select Files', 'board'); ?></label>
+                        <input type="file" name="documents[]" multiple style="border: 2px dashed #ccc; padding: 30px; text-align: center;">
                     </div>
-                    <button type="submit" id="submit-cm-request" class="board-btn-black"><?php _e('Submit Request', 'board'); ?></button>
+                    <button type="submit" id="submit-cm-request" class="board-btn-black" style="width: auto; padding: 12px 40px;"><?php _e('Submit Application', 'board'); ?></button>
                 </div>
             </div>
         </form>
@@ -54,40 +59,3 @@ if (!defined('ABSPATH')) {
     </div>
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-    $('.next-step').on('click', function() {
-        var next = $(this).data('next');
-        $('.cm-step').hide();
-        $('#step-' + next).show();
-    });
-
-    $('#board-membership-form').on('submit', function(e) {
-        e.preventDefault();
-        var form = $(this);
-        var btn = form.find('button[type="submit"]');
-        var formData = new FormData(this);
-        formData.append('action', 'board_membership_request');
-        formData.append('nonce', board_ajax.nonce);
-
-        btn.prop('disabled', true).text('Processing...');
-
-        $.ajax({
-            url: board_ajax.ajax_url,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    $('#cm-request-steps').hide();
-                    $('#cm-request-success').show();
-                } else {
-                    alert(response.data.message);
-                    btn.prop('disabled', false).text('Try Again');
-                }
-            }
-        });
-    });
-});
-</script>
