@@ -46,7 +46,7 @@ class Schema {
         $table_certificates = $wpdb->prefix . 'board_certificates';
         $sql_certificates = "CREATE TABLE $table_certificates (
             id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) NOT NULL,
+            user_id bigint(20) DEFAULT NULL,
             title varchar(255) NOT NULL,
             serial_number varchar(100) NOT NULL,
             type varchar(50) NOT NULL,

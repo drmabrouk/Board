@@ -186,6 +186,41 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Global Header Search (Structural)
+    $('#global-header-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        var results = $('#global-search-results');
+        if (val.length < 2) { results.hide(); return; }
+
+        var sections = [
+            { name: 'Dashboard', url: '?cp_tab=dashboard' },
+            { name: 'Users Management', url: '?cp_tab=users' },
+            { name: 'Programs', url: '?cp_tab=programs' },
+            { name: 'Exams', url: '?cp_tab=exams' },
+            { name: 'Membership Requests', url: '?cp_tab=requests' },
+            { name: 'Certificates & Accreditations', url: '?cp_tab=certificates' },
+            { name: 'Verification', url: '?cp_tab=verification' },
+            { name: 'Reports', url: '?cp_tab=reports' },
+            { name: 'Settings', url: '?cp_tab=settings' },
+            { name: 'System Settings - General', url: '?cp_tab=settings&set_tab=general' },
+            { name: 'System Settings - Design', url: '?cp_tab=settings&set_tab=design' },
+            { name: 'System Settings - Activity Logs', url: '?cp_tab=settings&set_tab=logs' },
+            { name: 'System Settings - Backup', url: '?cp_tab=settings&set_tab=backup' }
+        ];
+
+        var filtered = sections.filter(s => s.name.toLowerCase().includes(val));
+
+        if (filtered.length) {
+            results.html(filtered.map(s => '<div class="suggestion-item" data-url="' + s.url + '">' + s.name + '</div>').join('')).show();
+        } else {
+            results.hide();
+        }
+    });
+
+    $(document).on('click', '#global-search-results .suggestion-item', function() {
+        window.location.href = $(this).data('url');
+    });
+
     // Dynamic Role/Status Changes in Table
     $(document).on('change', '.quick-role-change, .quick-status-change', function() {
         var select = $(this);

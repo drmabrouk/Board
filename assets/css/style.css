@@ -3,11 +3,21 @@
 :root {
     --board-black: #000000;
     --board-white: #ffffff;
+    --board-grey-100: #f8f9fa;
+    --board-grey-200: #e9ecef;
+    --board-grey-300: #dee2e6;
+    --board-grey-400: #ced4da;
+    --board-grey-500: #adb5bd;
+    --board-grey-600: #6c757d;
+    --board-grey-700: #495057;
+    --board-grey-800: #343a40;
+    --board-grey-900: #212529;
     --board-grey-light: #f9f9f9;
     --board-grey: #eeeeee;
     --board-grey-dark: #333333;
+    --board-destructive: #8b0000;
     --board-border: #000000;
-    --board-transition: all 0.3s ease;
+    --board-transition: all 0.2s ease-in-out;
     --board-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
@@ -123,9 +133,18 @@ a:hover {
 }
 
 .board-btn-black:hover, .board-btn-black:focus {
-    background-color: #333; /* Slightly lighter for focus visibility */
+    background-color: var(--board-grey-900);
     outline: 2px solid var(--board-black);
     outline-offset: 2px;
+}
+
+.board-btn-destructive {
+    background-color: var(--board-destructive) !important;
+    border-color: var(--board-destructive) !important;
+}
+
+.board-btn-destructive:hover {
+    background-color: #660000 !important;
 }
 
 .board-btn-outline {
@@ -150,11 +169,12 @@ a:hover {
     display: flex;
     min-height: 100vh;
     border: 1px solid var(--board-black);
-    margin-top: 20px;
+    border-top: none;
+    margin-top: 0;
 }
 
 .board-cp-sidebar {
-    width: 260px;
+    width: 280px;
     background: var(--board-black);
     color: var(--board-white);
     display: flex;
@@ -173,11 +193,12 @@ a:hover {
 
 .board-cp-sidebar ul li a {
     color: var(--board-white);
-    padding: 15px 25px;
+    padding: 18px 30px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 14px;
+    gap: 15px;
+    font-size: 15px;
+    font-weight: 500;
     transition: var(--board-transition);
 }
 
@@ -210,10 +231,41 @@ a:hover {
 .board-cp-header {
     background: var(--board-black);
     color: var(--board-white);
-    padding: 15px 30px;
+    padding: 20px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border: 1px solid var(--board-black);
+}
+
+.board-header-search {
+    flex: 0 1 400px;
+    position: relative;
+}
+
+.board-header-search input {
+    width: 100%;
+    background: var(--board-grey-900);
+    border: 1px solid var(--board-grey-800);
+    color: var(--board-white);
+    padding: 8px 15px 8px 35px;
+    font-size: 13px;
+    border-radius: 4px;
+}
+
+.board-header-search input:focus {
+    outline: none;
+    border-color: var(--board-grey-600);
+    background: var(--board-black);
+}
+
+.board-header-search .dashicons {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--board-grey-500);
+    font-size: 16px;
 }
 
 .board-cp-header a {
@@ -229,8 +281,8 @@ a:hover {
 }
 
 .board-table th, .board-table td {
-    padding: 15px;
-    border: 1px solid var(--board-black);
+    padding: 18px 20px;
+    border: 1px solid var(--board-grey-300);
     text-align: left;
 }
 
@@ -238,11 +290,13 @@ a:hover {
     background: var(--board-black);
     color: var(--board-white);
     text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
     cursor: pointer;
     position: relative;
     user-select: none;
+    border-color: var(--board-grey-800);
 }
 
 .board-table th:after {
@@ -460,17 +514,18 @@ a:hover {
 
 /* Grayscale Statuses */
 .status-badge {
-    padding: 4px 12px;
+    padding: 6px 14px;
     font-size: 10px;
     text-transform: uppercase;
-    font-weight: 800;
+    font-weight: 700;
     border: 1px solid var(--board-black);
     display: inline-block;
+    letter-spacing: 0.5px;
 }
 
-.status-completed { background: var(--board-black); color: var(--board-white); }
-.status-pending { background: var(--board-grey); color: var(--board-black); }
-.status-expired { background: var(--board-white); color: var(--board-black); border-style: dashed; }
+.status-completed, .status-active, .status-approved { background: var(--board-black); color: var(--board-white); }
+.status-pending { background: var(--board-grey-200); color: var(--board-black); border-color: var(--board-grey-400); }
+.status-expired, .status-revoked, .status-inactive { background: var(--board-white); color: var(--board-destructive); border-color: var(--board-destructive); border-style: dashed; }
 
 /* Responsive Utilities */
 @media (max-width: 992px) {

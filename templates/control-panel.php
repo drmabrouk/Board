@@ -7,13 +7,20 @@ $user = wp_get_current_user();
 ?>
 
 <div class="board-cp-header">
-    <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px;">
+    <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px; flex: 0 0 auto;">
         <?php if ($logo_url = get_option('board_logo_url')) : ?>
             <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 30px;">
         <?php endif; ?>
-        <strong><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?></strong> <?php _e('Control Panel', 'board'); ?>
+        <strong><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?></strong> <?php _e('CP', 'board'); ?>
     </div>
-    <div class="board-cp-user">
+
+    <div class="board-header-search">
+        <span class="dashicons dashicons-search"></span>
+        <input type="text" id="global-header-search" placeholder="<?php _e('Search sections...', 'board'); ?>" autocomplete="off">
+        <div id="global-search-results" class="board-search-suggestions"></div>
+    </div>
+
+    <div class="board-cp-user" style="flex: 0 0 auto;">
         <?php printf(__('Welcome, %s', 'board'), $user->display_name); ?> |
         <a href="<?php echo wp_logout_url(home_url('/registration')); ?>" style="color: white;"><?php _e('Logout', 'board'); ?></a>
     </div>
@@ -27,10 +34,9 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs" data-tooltip="<?php _e('Course Catalog', 'board'); ?>"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
-            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'logs') ? 'active' : ''; ?>"><a href="?cp_tab=logs" data-tooltip="<?php _e('Audit Trails', 'board'); ?>"><span class="dashicons dashicons-list-view"></span> <?php _e('Activity Logs', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'settings') ? 'active' : ''; ?>"><a href="?cp_tab=settings" data-tooltip="<?php _e('Global Config', 'board'); ?>"><span class="dashicons dashicons-admin-settings"></span> <?php _e('Settings', 'board'); ?></a></li>
         </ul>
     </aside>
@@ -224,7 +230,7 @@ $user = wp_get_current_user();
                             <td><?php echo $certs_count; ?> / <?php echo $exams_count; ?></td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="board-btn-black board-btn-small delete-user" data-id="<?php echo $u->ID; ?>" data-tooltip="<?php _e('Permanently remove this user', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                                    <button class="board-btn-black board-btn-small board-btn-destructive delete-user" data-id="<?php echo $u->ID; ?>" data-tooltip="<?php _e('Permanently remove this user', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                                 </div>
                             </td>
                         </tr>
@@ -317,7 +323,7 @@ $user = wp_get_current_user();
                             <p style="font-size: 13px;"><?php echo wp_trim_words($p->description, 15); ?></p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
                                 <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
-                                <button class="board-btn-black board-btn-small board-btn-outline delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                                    <button class="board-btn-black board-btn-small board-btn-destructive delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -390,21 +396,30 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'requests') : ?>
-            <h3><?php _e('Pending Membership Requests', 'board'); ?></h3>
+            <h3><?php _e('Membership Requests & Members', 'board'); ?></h3>
             <table class="board-table">
-                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Country / Specialty', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Country / Specialty', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
                 <tbody>
-                    <?php if (!empty($pending_requests)) : ?>
-                        <?php foreach ($pending_requests as $request) : ?>
+                    <?php
+                    $all_memberships = DB::get_memberships();
+                    if (!empty($all_memberships)) : ?>
+                        <?php foreach ($all_memberships as $request) : ?>
                             <tr>
                                 <td><?php echo $request->created_at; ?></td>
                                 <td><?php echo esc_html($request->full_name); ?></td>
                                 <td><?php echo esc_html($request->country . ' / ' . $request->specialty); ?></td>
-                                <td><button class="board-btn-black approve-request" data-id="<?php echo $request->id; ?>" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Approve', 'board'); ?></button></td>
+                                <td><span class="status-badge status-<?php echo $request->status; ?>"><?php echo esc_html($request->status); ?></span></td>
+                                <td>
+                                    <?php if ($request->status == 'pending') : ?>
+                                        <button class="board-btn-black approve-request" data-id="<?php echo $request->id; ?>" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Approve', 'board'); ?></button>
+                                    <?php else: ?>
+                                        <span style="font-size: 11px; color: grey;"><?php _e('No Action Required', 'board'); ?></span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else : ?>
-                        <tr><td colspan="4" style="text-align: center;"><?php _e('No pending requests.', 'board'); ?></td></tr>
+                        <tr><td colspan="5" style="text-align: center;"><?php _e('No records found.', 'board'); ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -426,16 +441,22 @@ $user = wp_get_current_user();
             </div>
 
             <div id="generate-cert-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
-                <h4><?php _e('Generate & Link', 'board'); ?></h4>
+                <h4><?php _e('Create Certificate / Accreditation', 'board'); ?></h4>
                 <form id="board-generate-cert-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="board-form-field">
-                            <select name="user_id" required>
-                                <option value=""><?php _e('Select User', 'board'); ?></option>
+                            <label><?php _e('Certificate Title / Recipient Name', 'board'); ?></label>
+                            <input type="text" name="title" placeholder="<?php _e('e.g., Dr. Jane Smith - Advanced Diploma', 'board'); ?>">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Assigned User (Optional)', 'board'); ?></label>
+                            <select name="user_id">
+                                <option value=""><?php _e('Manual Creation (No Link)', 'board'); ?></option>
                                 <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
                             </select>
                         </div>
                         <div class="board-form-field">
+                            <label><?php _e('Accreditation Type', 'board'); ?></label>
                             <select name="cert_type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
@@ -476,13 +497,23 @@ $user = wp_get_current_user();
                             <h4><?php echo esc_html($c->title); ?></h4>
                             <p style="font-size: 12px; margin-bottom: 10px;">
                                 <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($c->type); ?> |
-                                <strong><?php _e('Status:', 'board'); ?></strong> <span style="text-transform: capitalize;"><?php echo esc_html($c->status); ?></span>
+                                <strong><?php _e('Status:', 'board'); ?></strong> <span class="status-badge status-<?php echo $c->status; ?>"><?php echo esc_html($c->status); ?></span>
                             </p>
                             <p style="font-size: 13px;"><code><?php echo esc_html($c->serial_number); ?></code></p>
-                            <p style="font-size: 11px; margin-top: 5px; color: grey;"><?php _e('Issued:', 'board'); ?> <?php echo $c->issue_date; ?></p>
-                            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                <button class="board-btn-black board-btn-small board-btn-outline revoke-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Invalidate this certificate', 'board'); ?>"><?php _e('Revoke', 'board'); ?></button>
-                                <button class="board-btn-black board-btn-small board-btn-outline delete-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Permanently delete record', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                            <p style="font-size: 11px; margin-top: 5px; color: grey;">
+                                <?php _e('Issued:', 'board'); ?> <?php echo $c->issue_date; ?> |
+                                <?php if ($c->user_id) : ?>
+                                    <strong>Linked to UID: <?php echo $c->user_id; ?></strong>
+                                <?php else : ?>
+                                    <span style="color: darkred; font-weight: bold;"><?php _e('Unlinked', 'board'); ?></span>
+                                <?php endif; ?>
+                            </p>
+                            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <?php if (!$c->user_id) : ?>
+                                    <button class="board-btn-black board-btn-small open-link-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Link this certificate to a user account', 'board'); ?>"><?php _e('Link User', 'board'); ?></button>
+                                <?php endif; ?>
+                                <button class="board-btn-black board-btn-small board-btn-destructive revoke-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Invalidate this certificate', 'board'); ?>"><?php _e('Revoke', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-destructive delete-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Permanently delete record', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -586,12 +617,12 @@ $user = wp_get_current_user();
             <h3><?php _e('System Settings', 'board'); ?></h3>
             <?php $set_tab = isset($_GET['set_tab']) ? $_GET['set_tab'] : 'general'; ?>
 
-            <div style="display: flex; border-bottom: 1px solid var(--board-black); margin-bottom: 20px; overflow-x: auto;">
-                <a href="?cp_tab=settings&set_tab=general" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'general' ? 'background: #eee;' : ''; ?>"><?php _e('General', 'board'); ?></a>
-                <a href="?cp_tab=settings&set_tab=design" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'design' ? 'background: #eee;' : ''; ?>"><?php _e('Design & Branding', 'board'); ?></a>
-                <a href="?cp_tab=settings&set_tab=logs" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'logs' ? 'background: #eee;' : ''; ?>"><?php _e('Activity Logs', 'board'); ?></a>
-                <a href="?cp_tab=settings&set_tab=backup" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'backup' ? 'background: #eee;' : ''; ?>"><?php _e('Backup & Portability', 'board'); ?></a>
-                <a href="?cp_tab=settings&set_tab=advanced" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'advanced' ? 'background: #eee;' : ''; ?>"><?php _e('Advanced', 'board'); ?></a>
+            <div style="display: flex; border-bottom: 1px solid var(--board-black); margin-bottom: 30px; overflow-x: auto; background: var(--board-grey-100); padding: 5px;">
+                <a href="?cp_tab=settings&set_tab=general" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'general' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('General Configuration', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=design" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'design' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Design & Visual Identity', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=logs" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'logs' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Audit & Activity Logs', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=backup" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'backup' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Data Backup & Recovery', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=advanced" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'advanced' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Advanced System Ops', 'board'); ?></a>
             </div>
 
             <?php if ($set_tab == 'general') : ?>
@@ -741,5 +772,24 @@ jQuery(document).ready(function($) {
     $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
     $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
     $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
+
+    $(document).on('click', '.open-link-cert', function() {
+        var certId = $(this).data('id');
+        var userId = prompt("Enter the User ID to link this certificate to:");
+        if (userId) {
+            $.post(board_ajax.ajax_url, {
+                action: 'board_link_certificate',
+                nonce: board_ajax.nonce,
+                cert_id: certId,
+                user_id: userId
+            }, function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error linking certificate.');
+                }
+            });
+        }
+    });
 });
 </script>
