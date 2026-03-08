@@ -25,6 +25,7 @@ class Manager {
         add_action('wp_ajax_board_update_user_role', array($this, 'handle_update_role'));
         add_action('wp_ajax_board_update_user_status', array($this, 'handle_update_status'));
         add_action('wp_ajax_board_generate_certificate', array($this, 'handle_generate_certificate'));
+        add_action('wp_ajax_board_link_certificate', array($this, 'handle_link_certificate'));
         add_action('wp_ajax_board_link_membership', array($this, 'handle_link_membership'));
         add_action('wp_ajax_board_user_lookup', array($this, 'handle_user_lookup'));
         add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
@@ -344,22 +345,40 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
+        $id = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $title = sanitize_text_field($_POST['title']);
         $desc = sanitize_textarea_field($_POST['desc']);
-        $code = sanitize_text_field($_POST['code']);
         $type = sanitize_text_field($_POST['type']);
+        $category = sanitize_text_field($_POST['category']);
+        $instructor = sanitize_text_field($_POST['instructor']);
+        $credits = intval($_POST['credits']);
         $duration = sanitize_text_field($_POST['duration']);
 
-        DB::save_program(array(
+        // Generate Unique Code if new
+        if (!$id) {
+            global $wpdb;
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}board_programs") + 1;
+            $code = 'GSHB-PROG-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        } else {
+            $code = sanitize_text_field($_POST['code']);
+        }
+
+        $data = array(
             'title' => $title,
             'description' => $desc,
             'code' => $code,
             'type' => $type,
+            'category' => $category,
+            'instructor' => $instructor,
+            'credits' => $credits,
             'duration' => $duration
-        ));
+        );
+        if ($id) $data['id'] = $id;
 
-        Plugin::log(__('Program Created', 'board'), sprintf(__('Program %s created.', 'board'), $title));
-        wp_send_json_success(array('message' => __('Program saved.', 'board')));
+        DB::save_program($data);
+
+        Plugin::log(__('Program Saved', 'board'), sprintf(__('Program %s processed.', 'board'), $title));
+        wp_send_json_success(array('message' => __('Program saved.', 'board'), 'code' => $code));
     }
 
     public function handle_delete_program() {

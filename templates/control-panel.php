@@ -273,55 +273,79 @@ $user = wp_get_current_user();
             </div>
 
             <!-- Add Program Form -->
-            <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
-                <h4><?php _e('Create Program', 'board'); ?></h4>
+            <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black); margin-bottom: 30px; border-radius: 8px;">
+                <h4><?php _e('Create Professional Program', 'board'); ?></h4>
                 <form id="board-save-program-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="board-form-field">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div class="board-form-field" style="grid-column: span 2;">
                             <label><?php _e('Program Title', 'board'); ?></label>
                             <input type="text" name="title" placeholder="e.g., Advanced Sports Nutrition" required>
                         </div>
                         <div class="board-form-field">
-                            <label><?php _e('Program Code', 'board'); ?></label>
-                            <input type="text" name="code" placeholder="e.g., ASN-2024" required>
-                        </div>
-                        <div class="board-form-field">
-                            <label><?php _e('Type', 'board'); ?></label>
+                            <label><?php _e('Program Type', 'board'); ?></label>
                             <select name="type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
                                 <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                                <option value="Accreditation"><?php _e('Accreditation', 'board'); ?></option>
                             </select>
                         </div>
                         <div class="board-form-field">
-                            <label><?php _e('Duration', 'board'); ?></label>
+                            <label><?php _e('Category / Field', 'board'); ?></label>
+                            <input type="text" name="category" placeholder="e.g., Medicine">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Lead Instructor', 'board'); ?></label>
+                            <input type="text" name="instructor" placeholder="e.g., Dr. Smith">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Academic Credits', 'board'); ?></label>
+                            <input type="number" name="credits" value="0">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Program Duration', 'board'); ?></label>
                             <input type="text" name="duration" placeholder="e.g., 6 Months">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Auto-Code (GSHB-PROG-XXXX)', 'board'); ?></label>
+                            <input type="text" name="code" placeholder="Leave empty for auto-gen" readonly style="background: #eee;">
                         </div>
                     </div>
                     <div class="board-form-field">
-                        <label><?php _e('Description', 'board'); ?></label>
-                        <textarea name="desc" placeholder="Brief program overview..." rows="4"></textarea>
+                        <label><?php _e('Professional Description', 'board'); ?></label>
+                        <textarea name="desc" placeholder="Detailed program overview..." rows="5"></textarea>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
-                        <button type="button" id="close-add-program" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Cancel', 'board'); ?></button>
+                    <div style="display: flex; gap: 15px;">
+                        <button type="submit" class="board-btn-black"><?php _e('Publish Program', 'board'); ?></button>
+                        <button type="button" id="close-add-program" class="board-btn-black board-btn-outline"><?php _e('Cancel', 'board'); ?></button>
                     </div>
                 </form>
             </div>
 
-            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1; position: relative;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
-                    <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+            <div style="margin-bottom: 30px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: flex-end;">
+                <div style="position: relative;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
+                    <input type="text" id="program-search" placeholder="<?php _e('Search by title, code, instructor...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
                     <div id="program-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Type', 'board'); ?></label>
-                    <select id="program-type-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Type Filter', 'board'); ?></label>
+                    <select id="program-type-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
                         <option value=""><?php _e('All Types', 'board'); ?></option>
-                        <option value="Course"><?php _e('Course', 'board'); ?></option>
-                        <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
-                        <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                        <option value="course"><?php _e('Course', 'board'); ?></option>
+                        <option value="diploma"><?php _e('Diploma', 'board'); ?></option>
+                        <option value="board membership"><?php _e('Board Membership', 'board'); ?></option>
+                        <option value="accreditation"><?php _e('Accreditation', 'board'); ?></option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Category Filter', 'board'); ?></label>
+                    <select id="program-category-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                        <option value=""><?php _e('All Categories', 'board'); ?></option>
+                        <?php
+                        $cats = $wpdb->get_col("SELECT DISTINCT category FROM {$wpdb->prefix}board_programs WHERE category != ''");
+                        foreach($cats as $cat) echo '<option value="'.strtolower($cat).'">'.esc_html($cat).'</option>';
+                        ?>
                     </select>
                 </div>
             </div>
@@ -332,13 +356,20 @@ $user = wp_get_current_user();
                 if (!empty($progs)) :
                     foreach ($progs as $p) :
                         ?>
-                        <div class="board-program-card" data-title="<?php echo strtolower($p->title); ?>">
-                            <h4><?php echo esc_html($p->title); ?></h4>
-                            <p style="font-size: 12px; margin-bottom: 10px;">
+                        <div class="board-program-card" data-title="<?php echo strtolower($p->title); ?>" data-type="<?php echo strtolower($p->type); ?>" data-category="<?php echo strtolower($p->category); ?>">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h4 style="margin: 0;"><?php echo esc_html($p->title); ?></h4>
+                                <span class="status-badge" style="font-size: 9px; background: #f0f0f0;"><?php echo esc_html($p->code); ?></span>
+                            </div>
+                            <p style="font-size: 12px; margin-bottom: 10px; color: #666;">
                                 <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($p->type); ?> |
-                                <strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($p->code); ?>
+                                <strong><?php _e('Category:', 'board'); ?></strong> <?php echo esc_html($p->category ?: 'General'); ?>
                             </p>
-                            <p style="font-size: 13px;"><?php echo wp_trim_words($p->description, 15); ?></p>
+                            <p style="font-size: 13px; flex-grow: 1;"><?php echo wp_trim_words($p->description, 20); ?></p>
+                            <p style="font-size: 11px; margin-top: 10px; border-top: 1px solid #eee; pt-10;">
+                                <strong><?php _e('Instructor:', 'board'); ?></strong> <?php echo esc_html($p->instructor ?: 'N/A'); ?> |
+                                <strong><?php _e('Credits:', 'board'); ?></strong> <?php echo intval($p->credits); ?>
+                            </p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
                                 <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
                                     <button class="board-btn-black board-btn-small board-btn-destructive delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>

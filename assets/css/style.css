@@ -29,9 +29,9 @@ body {
 }
 
 .board-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 30px;
 }
 
 /* Typography */
@@ -127,8 +127,10 @@ a:hover {
     text-transform: uppercase;
     letter-spacing: 1px;
     display: inline-block;
-    width: 100%;
+    width: auto;
+    min-width: 120px;
     text-align: center;
+    border-radius: 6px;
     transition: var(--board-transition);
 }
 
@@ -141,6 +143,7 @@ a:hover {
 .board-btn-destructive {
     background-color: var(--board-destructive) !important;
     border-color: var(--board-destructive) !important;
+    border-radius: 6px;
 }
 
 .board-btn-destructive:hover {
@@ -151,6 +154,7 @@ a:hover {
     background-color: var(--board-white);
     color: var(--board-black) !important;
     border: 1px solid var(--board-black);
+    border-radius: 6px;
 }
 
 .board-btn-outline:hover {
@@ -219,7 +223,7 @@ a:hover {
 .board-cp-main {
     flex-grow: 1;
     background: var(--board-white);
-    padding: 40px;
+    padding: 50px;
     animation: boardFadeIn 0.5s ease;
 }
 
@@ -353,8 +357,8 @@ a:hover {
 }
 
 .board-program-card {
-    border: 1px solid var(--board-black);
-    padding: 30px;
+    border: 1px solid var(--board-grey-300);
+    padding: 35px;
     background: var(--board-white);
     transition: var(--board-transition);
     position: relative;
@@ -362,6 +366,7 @@ a:hover {
     flex-direction: column;
     height: 100%;
     box-sizing: border-box;
+    border-radius: 8px;
 }
 
 .board-program-card:hover {

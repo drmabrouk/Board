@@ -20,11 +20,19 @@ if (!defined('ABSPATH')) {
         </form>
     </div>
 
-    <div id="verify-result" style="margin-top: 40px; display: none; max-width: 600px; margin-left: auto; margin-right: auto;">
-        <div class="board-program-card" style="border-width: 2px; padding: 40px;">
-            <h3 id="verify-title" style="border-bottom: 1px solid var(--board-black); padding-bottom: 15px; margin-bottom: 25px;"><?php _e('Verification Result', 'board'); ?></h3>
-            <div id="verify-content">
+    <div id="verify-result" style="margin-top: 50px; display: none; max-width: 700px; margin-left: auto; margin-right: auto;">
+        <div class="board-program-card" style="border: 2px solid var(--board-black); padding: 50px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <span class="dashicons dashicons-shield" style="font-size: 48px; width: 48px; height: 48px; color: var(--board-black);"></span>
+                <h3 id="verify-title" style="margin-top: 15px; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;"><?php _e('Verification Status', 'board'); ?></h3>
+            </div>
+
+            <div id="verify-content" style="border-top: 1px solid #eee; padding-top: 30px;">
                 <!-- Result content will be injected here -->
+            </div>
+
+            <div style="margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+                <p style="font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 1px;"><?php _e('Global Sports Health Board Security Protocol', 'board'); ?></p>
             </div>
         </div>
     </div>

@@ -159,14 +159,21 @@ jQuery(document).ready(function($) {
     });
 
     // Live Search: Programs
-    $('#program-search, #program-type-filter').on('keyup change', function() {
+    $('#program-search, #program-type-filter, #program-category-filter').on('keyup change', function() {
         var searchVal = $('#program-search').val().toLowerCase();
         var typeVal = $('#program-type-filter').val().toLowerCase();
+        var catVal = $('#program-category-filter').val().toLowerCase();
 
         $('#admin-programs-grid .board-program-card, .board-programs-grid .board-program-card').each(function() {
             var text = $(this).text().toLowerCase();
-            var show = text.indexOf(searchVal) > -1 && (!typeVal || text.indexOf(typeVal) > -1);
-            if (show) $(this).fadeIn(200);
+            var pType = $(this).data('type') || '';
+            var pCat = $(this).data('category') || '';
+
+            var showSearch = text.indexOf(searchVal) > -1;
+            var showType = !typeVal || pType.indexOf(typeVal) > -1;
+            var showCat = !catVal || pCat.indexOf(catVal) > -1;
+
+            if (showSearch && showType && showCat) $(this).fadeIn(200);
             else $(this).fadeOut(200);
         });
     });
@@ -360,7 +367,8 @@ jQuery(document).ready(function($) {
                     if (form.attr('id') === 'board-membership-form') {
                         $('#cm-request-steps').hide();
                         $('#cm-request-success').fadeIn();
-                    } else if (action.indexOf('save') === -1 && action.indexOf('settings') === -1) {
+                    } else {
+                         // Force reload for programs and other management sections to show new data
                          setTimeout(function() { window.location.reload(); }, 1000);
                     }
                 } else {
@@ -499,18 +507,26 @@ jQuery(document).ready(function($) {
             btn.prop('disabled', false).text('Verify Document');
             $('#verify-result').fadeIn();
             if (response.success && response.data.valid) {
-                var status = response.data.is_active ? '<span style="font-weight: bold; border-bottom: 2px solid black;">✔ Valid</span>' : '<span style="color: #666; font-weight: bold;">✘ Expired / Invalid</span>';
-                var html = '<p><strong>Status:</strong> ' + status + '</p>' +
-                           '<p><strong>Holder:</strong> ' + response.data.name + '</p>' +
-                           '<p><strong>Type:</strong> ' + response.data.type + '</p>' +
-                           '<p><strong>Specialty:</strong> ' + response.data.specialty + '</p>' +
-                           '<p><strong>Expires:</strong> ' + response.data.expiry + '</p>';
-                if (response.data.url) html += '<a href="' + response.data.url + '" class="board-btn-black board-btn-small" style="margin-top:10px;">View Digital Certificate</a>';
+                var statusClass = response.data.is_active ? 'status-active' : 'status-expired';
+                var statusText = response.data.is_active ? '✔ AUTHENTICATED' : '✘ EXPIRED / INVALID';
+
+                var html = '<div style="display: grid; grid-template-columns: 1fr; gap: 20px;">' +
+                           '<div style="text-align:center; margin-bottom:20px;"><span class="status-badge ' + statusClass + '" style="font-size:16px; padding:10px 30px;">' + statusText + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Holder Name:</strong> <span>' + response.data.name + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Credential Type:</strong> <span>' + response.data.type + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Specialization:</strong> <span>' + response.data.specialty + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Valid Until:</strong> <span>' + response.data.expiry + '</span></div>';
+
+                if (response.data.url) {
+                    html += '<div style="text-align:center; margin-top:30px;"><a href="' + response.data.url + '" class="board-btn-black" style="width:auto; padding:15px 40px;">View Digital Credential</a></div>';
+                }
+                html += '</div>';
+
                 $('#verify-content').html(html);
-                boardNotify('Verification successful.');
+                boardNotify('Credential verified successfully.');
             } else {
-                $('#verify-content').html('<p style="font-weight: bold; border-bottom: 1px solid black; display: inline-block; padding-bottom: 5px; margin-bottom: 15px;">✘ ' + (response.data.message || 'Invalid or Expired Code') + '</p><p>Please check the code and try again.</p>');
-                boardNotify('Invalid code provided.', 'error');
+                $('#verify-content').html('<div style="text-align:center; padding:30px;"><span class="status-badge status-revoked" style="font-size:16px; padding:10px 30px; margin-bottom:20px;">' + (response.data.message || 'INVALID CREDENTIAL') + '</span><p style="margin-top:20px;">The verification code entered does not match our records or has been permanently revoked.</p></div>');
+                boardNotify('Verification failed.', 'error');
             }
         });
     });

@@ -17,13 +17,13 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_programs';
 
-        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE code = %s", $data['code']));
-
-        if ($exists) {
-            return $wpdb->update($table, $data, array('id' => $exists));
-        } else {
-            return $wpdb->insert($table, $data);
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
         }
+
+        return $wpdb->insert($table, $data);
     }
 
     public static function delete_program($id) {
