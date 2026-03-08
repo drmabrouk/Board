@@ -1,0 +1,170 @@
+/* Monochromatic Visual Identity: Black and White */
+
+:root {
+    --board-black: #000000;
+    --board-white: #ffffff;
+    --board-grey: #f4f4f4;
+    --board-border: #dddddd;
+}
+
+.board-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+/* Registration/Login Box */
+.board-auth-box {
+    max-width: 400px;
+    margin: 50px auto;
+    border: 1px solid var(--board-border);
+    padding: 30px;
+    background: var(--board-white);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.board-auth-box h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.board-form-field {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.board-form-field input, .board-form-field select, .board-form-field textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--board-black);
+    font-size: 14px;
+    background: var(--board-white);
+    color: var(--board-black);
+}
+
+.board-form-field .toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.board-btn-black {
+    background-color: var(--board-black);
+    color: var(--board-white);
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    text-transform: uppercase;
+    width: 100%;
+    transition: opacity 0.3s;
+}
+
+.board-btn-black:hover {
+    opacity: 0.8;
+}
+
+.board-auth-toggle {
+    margin-top: 20px;
+    font-size: 13px;
+}
+
+.board-auth-toggle a {
+    color: var(--board-black);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Control Panel Sidebar & Header */
+.board-cp-layout {
+    display: flex;
+    min-height: 80vh;
+}
+
+.board-cp-sidebar {
+    width: 250px;
+    background: var(--board-black);
+    color: var(--board-white);
+    padding: 20px;
+}
+
+.board-cp-sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.board-cp-sidebar ul li {
+    padding: 10px 0;
+    border-bottom: 1px solid #333;
+}
+
+.board-cp-sidebar ul li a {
+    color: var(--board-white);
+    text-decoration: none;
+}
+
+.board-cp-main {
+    flex-grow: 1;
+    background: var(--board-white);
+}
+
+.board-cp-header {
+    background: var(--board-black);
+    color: var(--board-white);
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Professional Table */
+.board-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.board-table th, .board-table td {
+    padding: 12px;
+    border: 1px solid var(--board-border);
+    text-align: left;
+}
+
+.board-table th {
+    background: var(--board-black);
+    color: var(--board-white);
+}
+
+/* Programs Cards */
+.board-programs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.board-program-card {
+    border: 1px solid var(--board-black);
+    padding: 20px;
+    background: var(--board-white);
+    transition: transform 0.3s;
+}
+
+.board-program-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .board-cp-layout {
+        flex-direction: column;
+    }
+    .board-cp-sidebar {
+        width: 100%;
+    }
+}
