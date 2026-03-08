@@ -10,7 +10,52 @@ class Board_Admin {
         add_action('wp_ajax_board_approve_request', array($this, 'handle_approval'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
         add_action('wp_ajax_board_assign_exam', array($this, 'handle_assign_exam'));
+        add_action('wp_ajax_board_generate_certificate', array($this, 'handle_generate_certificate'));
+        add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
+    }
+
+    public function handle_generate_certificate() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+
+        $user_id = intval($_POST['user_id']);
+        $type = sanitize_text_field($_POST['cert_type']);
+        $user = get_userdata($user_id);
+
+        $serial = 'GSHB-' . strtoupper(wp_generate_password(10, false));
+
+        $cert_id = wp_insert_post(array(
+            'post_title' => $user->display_name . ' - ' . $type,
+            'post_status' => 'publish',
+            'post_type' => 'board_certificate',
+            'meta_input' => array(
+                'user_id' => $user_id,
+                'cert_type' => $type,
+                'serial_number' => $serial
+            )
+        ));
+
+        if (is_wp_error($cert_id)) wp_send_json_error();
+
+        Board::log(__('Certificate Generated', 'board'), sprintf(__('Certificate %s generated for user %d.', $serial, $user_id)));
+        wp_send_json_success(array('message' => __('Certificate generated successfully.', 'board'), 'serial' => $serial));
+    }
+
+    public function handle_delete_user() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+
+        $user_id = intval($_POST['user_id']);
+        if ($user_id == get_current_user_id()) wp_send_json_error(array('message' => 'Cannot delete yourself.'));
+
+        require_once(ABSPATH . 'wp-admin/includes/user.php');
+        if (wp_delete_user($user_id)) {
+            Board::log(__('User Deleted', 'board'), sprintf(__('User ID %d was deleted.', $user_id)));
+            wp_send_json_success(array('message' => __('User deleted.', 'board')));
+        } else {
+            wp_send_json_error();
+        }
     }
 
     public function handle_export_users() {

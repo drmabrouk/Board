@@ -24,6 +24,13 @@ class Board_Branding {
     }
 
     public function remove_admin_menus() {
+        // Always remove GSHB CPTs from default sidebar as management is in /cp
+        remove_menu_page('edit.php?post_type=board_program');
+        remove_menu_page('edit.php?post_type=board_exam');
+        remove_menu_page('edit.php?post_type=board_request');
+        remove_menu_page('edit.php?post_type=board_log');
+        remove_menu_page('edit.php?post_type=board_certificate');
+
         if (!current_user_can('manage_options')) {
             remove_menu_page('index.php');
             remove_menu_page('edit.php');

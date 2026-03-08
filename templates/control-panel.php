@@ -53,9 +53,11 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'users') : ?>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Users Management', 'board'); ?></h3>
-                <a href="<?php echo admin_url('admin-post.php?action=board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Users (CSV)', 'board'); ?></a>
+                <div>
+                    <a href="<?php echo admin_url('admin-post.php?action=board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px; margin-right: 10px;"><?php _e('Export CSV', 'board'); ?></a>
+                </div>
             </div>
             <table class="board-table">
                 <thead>
@@ -71,10 +73,12 @@ $user = wp_get_current_user();
                     $users_list = get_users();
                     foreach ($users_list as $u) : ?>
                         <tr>
-                            <td><?php echo $u->display_name; ?></td>
-                            <td><?php echo $u->user_email; ?></td>
+                            <td><?php echo esc_html($u->display_name); ?></td>
+                            <td><?php echo esc_html($u->user_email); ?></td>
                             <td><?php echo implode(', ', $u->roles); ?></td>
-                            <td><a href="#" style="color: black; text-decoration: underline;"><?php _e('Edit', 'board'); ?></a></td>
+                            <td>
+                                <button class="board-btn-black delete-user" data-id="<?php echo $u->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 11px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -148,19 +152,42 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'certificates') : ?>
-            <h3><?php _e('Manage Certificates', 'board'); ?></h3>
+            <h3><?php _e('Generate Certificate', 'board'); ?></h3>
+            <form id="board-generate-cert-form" style="margin-bottom: 40px;">
+                <div class="board-form-field">
+                    <select name="user_id" required>
+                        <option value=""><?php _e('Select User', 'board'); ?></option>
+                        <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
+                    </select>
+                </div>
+                <div class="board-form-field">
+                    <select name="cert_type" required>
+                        <option value="Course"><?php _e('Course', 'board'); ?></option>
+                        <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                        <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                        <option value="Exam Certificate"><?php _e('Exam Certificate', 'board'); ?></option>
+                    </select>
+                </div>
+                <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Generate & Link', 'board'); ?></button>
+            </form>
+
+            <h3><?php _e('Active Certificates', 'board'); ?></h3>
             <table class="board-table">
-                <thead><tr><th><?php _e('User', 'board'); ?></th><th><?php _e('Type', 'board'); ?></th><th><?php _e('Code', 'board'); ?></th></tr></thead>
+                <thead><tr><th><?php _e('User', 'board'); ?></th><th><?php _e('Type', 'board'); ?></th><th><?php _e('Serial Number', 'board'); ?></th></tr></thead>
                 <tbody>
                     <?php
-                    $certs = get_posts(array('post_type' => 'board_certificate'));
-                    foreach ($certs as $c) : ?>
-                        <tr>
-                            <td><?php echo get_the_title($c->ID); ?></td>
-                            <td><?php echo get_post_meta($c->ID, 'cert_type', true); ?></td>
-                            <td><code><?php echo get_post_meta($c->ID, 'serial_number', true); ?></code></td>
-                        </tr>
-                    <?php endforeach; ?>
+                    $certs = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
+                    if (!empty($certs)) :
+                        foreach ($certs as $c) : ?>
+                            <tr>
+                                <td><?php echo get_the_title($c->ID); ?></td>
+                                <td><?php echo get_post_meta($c->ID, 'cert_type', true); ?></td>
+                                <td><code><?php echo get_post_meta($c->ID, 'serial_number', true); ?></code></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="3" style="text-align: center;"><?php _e('No certificates issued yet.', 'board'); ?></td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         <?php endif; ?>
@@ -226,6 +253,23 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_assign_exam&nonce=' + board_ajax.nonce, function(response) {
             alert(response.data.message);
+        });
+    });
+
+    $('#board-generate-cert-form').on('submit', function(e) {
+        e.preventDefault();
+        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_generate_certificate&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+            location.reload();
+        });
+    });
+
+    $('.delete-user').on('click', function() {
+        var id = $(this).data('id');
+        if (!confirm('<?php _e('Delete this user? This action cannot be undone.', 'board'); ?>')) return;
+        $.post(board_ajax.ajax_url, { action: 'board_delete_user', nonce: board_ajax.nonce, user_id: id }, function(response) {
+            alert(response.data.message);
+            location.reload();
         });
     });
 });
