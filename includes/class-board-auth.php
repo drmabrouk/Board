@@ -82,6 +82,10 @@ class Board_Auth {
             $user = new WP_User($user_id);
             $user->set_role('board_member');
 
+            // Initialize metadata
+            update_user_meta($user_id, 'membership_status', 'active');
+            update_user_meta($user_id, 'verification_code', 'GSHB-' . strtoupper(wp_generate_password(8, false)));
+
             // Log the user in
             wp_set_current_user($user_id);
             wp_set_auth_cookie($user_id);
