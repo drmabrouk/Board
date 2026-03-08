@@ -216,11 +216,18 @@ class Board_Auth {
         } else {
             Board::log(__('Membership Request', 'board'), sprintf(__('User %d submitted a membership request.', 'board'), $user_id), $user_id);
 
-            // Notify Admin/Supervisor
-            $admin_email = get_option('admin_email');
-            $subject = __('New Membership Request - GSHB', 'board');
-            $body = sprintf(__('A new membership request has been submitted by %s. Please review it in the Control Panel.', 'board'), $full_name);
-            wp_mail($admin_email, $subject, $body);
+            // Notify Academic Supervisor and Certifications Manager
+            $notification_users = get_users(array(
+                'role__in' => array('academic_supervisor', 'certs_manager', 'board_admin', 'administrator')
+            ));
+
+            $emails = array_map(function($u) { return $u->user_email; }, $notification_users);
+
+            if (!empty($emails)) {
+                $subject = __('New Membership Request - GSHB', 'board');
+                $body = sprintf(__('A new membership request has been submitted by %s. Please review it in the Control Panel.', 'board'), $full_name);
+                wp_mail($emails, $subject, $body);
+            }
 
             wp_send_json_success(array('message' => __('Your membership application has been submitted.', 'board')));
         }

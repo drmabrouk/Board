@@ -10,6 +10,23 @@ class Board_Admin {
         add_action('wp_ajax_board_approve_request', array($this, 'handle_approval'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
         add_action('wp_ajax_board_assign_exam', array($this, 'handle_assign_exam'));
+        add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
+    }
+
+    public function handle_export_users() {
+        if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=users_export.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('ID', 'Name', 'Email', 'Roles', 'Registration Date'));
+
+        $users = get_users();
+        foreach ($users as $u) {
+            fputcsv($output, array($u->ID, $u->display_name, $u->user_email, implode(',', $u->roles), $u->user_registered));
+        }
+        fclose($output);
+        exit;
     }
 
     public function handle_save_program() {
@@ -86,6 +103,18 @@ class Board_Admin {
         // Generate a verification code
         $verify_code = 'GSHB-' . strtoupper(wp_generate_password(8, false));
         update_user_meta($user_id, 'verification_code', $verify_code);
+
+        // Generate Certificate Record
+        wp_insert_post(array(
+            'post_title' => $user->display_name,
+            'post_status' => 'publish',
+            'post_type' => 'board_certificate',
+            'meta_input' => array(
+                'user_id' => $user_id,
+                'cert_type' => __('Membership', 'board'),
+                'serial_number' => $verify_code
+            )
+        ));
 
         // Update request status
         update_post_meta($request_id, 'status', 'approved');

@@ -50,5 +50,15 @@ class Board_CPT {
             'show_in_rest' => false,
             'menu_icon'   => 'dashicons-list-view'
         ));
+
+        // Certificates
+        register_post_type('board_certificate', array(
+            'labels'      => array('name' => __('Certificates', 'board')),
+            'public'      => false,
+            'show_ui'     => true,
+            'supports'    => array('title'),
+            'show_in_rest' => false,
+            'menu_icon'   => 'dashicons-awards'
+        ));
     }
 }
