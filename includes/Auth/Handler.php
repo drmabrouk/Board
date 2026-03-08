@@ -1,10 +1,14 @@
 <?php
+namespace GSHB\Board\Auth;
+
+use GSHB\Board\Core\Roles;
+use GSHB\Board\Board as Plugin;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Auth {
+class Handler {
 
     public function __construct() {
         add_action('wp_ajax_nopriv_board_login', array($this, 'handle_login'));
@@ -37,7 +41,7 @@ class Board_Auth {
         if (is_wp_error($user)) {
             wp_send_json_error(array('message' => $user->get_error_message()));
         } else {
-            Board::log(__('User Login', 'board'), sprintf(__('User %s logged in.', 'board'), $user->user_login), $user->ID);
+            Plugin::log(__('User Login', 'board'), sprintf(__('User %s logged in.', 'board'), $user->user_login), $user->ID);
             $redirect_url = $this->custom_login_redirect(home_url(), '', $user);
             wp_send_json_success(array(
                 'message' => __('Login successful! Redirecting...', 'board'),
@@ -48,9 +52,9 @@ class Board_Auth {
 
     public function custom_login_redirect($redirect_to, $request, $user) {
         if ($user && isset($user->roles) && is_array($user->roles)) {
-            if (Board_Roles::can_access_cp($user->ID)) {
+            if (Roles::can_access_cp($user->ID)) {
                 return home_url('/cp');
-            } elseif (Board_Roles::can_access_mb($user->ID)) {
+            } elseif (Roles::can_access_mb($user->ID)) {
                 return home_url('/mb');
             }
         }
@@ -79,7 +83,7 @@ class Board_Auth {
             wp_send_json_error(array('message' => $user_id->get_error_message()));
         } else {
             // Set default role to board_member
-            $user = new WP_User($user_id);
+            $user = new \WP_User($user_id);
             $user->set_role('board_member');
 
             // Initialize metadata
@@ -182,7 +186,7 @@ class Board_Auth {
 
         update_user_meta($user_id, 'completed_exams', $completed);
 
-        Board::log(__('Exam Submitted', 'board'), sprintf(__('User %d submitted exam %d with score %d.', $user_id, $exam_id, $score)), $user_id);
+        Plugin::log(__('Exam Submitted', 'board'), sprintf(__('User %d submitted exam %d with score %d.', $user_id, $exam_id, $score)), $user_id);
 
         wp_send_json_success(array('message' => __('Exam submitted successfully.', 'board')));
     }
@@ -201,7 +205,7 @@ class Board_Auth {
         $institution = sanitize_text_field($_POST['institution']);
 
         // Handle File Uploads
-        $attachment_ids = array();
+        $doc_url = '';
         if (!empty($_FILES['documents'])) {
             require_once(ABSPATH . 'wp-admin/includes/file.php');
             require_once(ABSPATH . 'wp-admin/includes/media.php');
@@ -220,37 +224,28 @@ class Board_Auth {
 
                     $attachment_id = media_handle_sideload($file, 0);
                     if (!is_wp_error($attachment_id)) {
-                        $attachment_ids[] = $attachment_id;
+                        $doc_url = wp_get_attachment_url($attachment_id);
+                        break; // Just take the first one for simplicity in the custom table
                     }
                 }
             }
         }
 
-        $request_id = wp_insert_post(array(
-            'post_title' => __('Membership Application: ', 'board') . $full_name,
-            'post_status' => 'publish',
-            'post_type' => 'board_request',
-            'meta_input' => array(
-                'user_id' => $user_id,
-                'full_name' => $full_name,
-                'country' => $country,
-                'specialty' => $specialty,
-                'institution' => $institution,
-                'status' => 'pending',
-                'document_ids' => $attachment_ids
-            )
+        $saved = \GSHB\Board\Database\Manager::save_membership(array(
+            'user_id' => $user_id,
+            'full_name' => $full_name,
+            'country' => $country,
+            'specialty' => $specialty,
+            'document_url' => $doc_url,
+            'status' => 'pending'
         ));
 
-        if (is_wp_error($request_id)) {
-            wp_send_json_error(array('message' => $request_id->get_error_message()));
+        if (!$saved) {
+            wp_send_json_error(array('message' => __('Failed to save request.', 'board')));
         } else {
-            Board::log(__('Membership Request', 'board'), sprintf(__('User %d submitted a membership request.', 'board'), $user_id), $user_id);
+            Plugin::log(__('Membership Request', 'board'), sprintf(__('User %d submitted a membership request.', 'board'), $user_id), $user_id);
 
-            // Notify Academic Supervisor and Certifications Manager
-            $notification_users = get_users(array(
-                'role__in' => array('academic_supervisor', 'certs_manager', 'board_admin', 'administrator')
-            ));
-
+            $notification_users = get_users(array('role__in' => array('academic_supervisor', 'certs_manager', 'board_admin')));
             $emails = array_map(function($u) { return $u->user_email; }, $notification_users);
 
             if (!empty($emails)) {

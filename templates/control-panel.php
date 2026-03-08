@@ -47,7 +47,8 @@ $user = wp_get_current_user();
             <?php endif; ?>
         </div>
         <?php
-        $pending_requests = Board_Admin::get_pending_requests();
+        use GSHB\Board\Database\Manager as DB;
+        $pending_requests = \GSHB\Board\Admin\Manager::get_pending_requests();
         $total_pending = count($pending_requests);
         ?>
 
@@ -55,12 +56,12 @@ $user = wp_get_current_user();
             <h2><?php _e('Dashboard Overview', 'board'); ?></h2>
             <div class="board-cp-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                 <div class="board-stat-card"><h3><?php _e('Users', 'board'); ?></h3><p class="board-stat-number"><?php $uc = count_users(); echo $uc['total_users']; ?></p></div>
-                <div class="board-stat-card"><h3><?php _e('Programs', 'board'); ?></h3><p class="board-stat-number"><?php echo wp_count_posts('board_program')->publish; ?></p></div>
+                <div class="board-stat-card"><h3><?php _e('Programs', 'board'); ?></h3><p class="board-stat-number"><?php echo count(DB::get_programs()); ?></p></div>
                 <div class="board-stat-card"><h3><?php _e('Pending Requests', 'board'); ?></h3><p class="board-stat-number"><?php echo $total_pending; ?></p></div>
-                <div class="board-stat-card"><h3><?php _e('Certificates', 'board'); ?></h3><p class="board-stat-number"><?php echo wp_count_posts('board_certificate')->publish; ?></p></div>
+                <div class="board-stat-card"><h3><?php _e('Certificates', 'board'); ?></h3><p class="board-stat-number"><?php echo count(DB::get_certificates()); ?></p></div>
             </div>
 
-            <?php if (current_user_can('manage_options') || Board_Roles::is_board_admin()) : ?>
+            <?php if (current_user_can('manage_options') || \GSHB\Board\Core\Roles::is_board_admin()) : ?>
             <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                 <div class="board-program-card">
                     <h4><?php _e('Action Center', 'board'); ?></h4>
@@ -200,7 +201,7 @@ $user = wp_get_current_user();
                     foreach ($users_list as $u) :
                         $id_code = get_user_meta($u->ID, 'verification_code', true) ?: 'N/A';
                         $status = get_user_meta($u->ID, 'membership_status', true) ?: 'active';
-                        $certs_count = count(get_posts(array('post_type' => 'board_certificate', 'meta_key' => 'user_id', 'meta_value' => $u->ID)));
+                        $certs_count = count(DB::get_certificates($u->ID));
                         $exams_count = count(get_user_meta($u->ID, 'assigned_exams', true) ?: array());
                         ?>
                         <tr data-role="<?php echo implode(' ', $u->roles); ?>">
@@ -235,7 +236,13 @@ $user = wp_get_current_user();
         <?php if ($tab == 'programs') : ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Manage Programs', 'board'); ?></h3>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: flex; gap: 5px; align-items: center;">
+                        <?php wp_nonce_field('board_import_nonce'); ?>
+                        <input type="hidden" name="action" value="board_import_programs">
+                        <input type="file" name="import_file" style="font-size: 11px;" required>
+                        <button type="submit" class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 11px;"><?php _e('Import CSV', 'board'); ?></button>
+                    </form>
                     <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_programs'), 'board_export_programs'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Programs', 'board'); ?></a>
                     <button class="board-btn-black" id="open-add-program" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add New Program', 'board'); ?></button>
                 </div>
@@ -297,24 +304,20 @@ $user = wp_get_current_user();
 
             <div class="board-programs-grid" id="admin-programs-grid" style="padding: 0;">
                 <?php
-                $progs = get_posts(array('post_type' => 'board_program', 'posts_per_page' => -1));
+                $progs = DB::get_programs();
                 if (!empty($progs)) :
                     foreach ($progs as $p) :
-                        $code = get_post_meta($p->ID, 'program_code', true);
-                        $type = get_post_meta($p->ID, 'program_type', true) ?: 'Course';
-                        $duration = get_post_meta($p->ID, 'program_duration', true) ?: 'N/A';
-                        $status = get_post_status($p->ID);
                         ?>
-                        <div class="board-program-card" data-title="<?php echo strtolower($p->post_title); ?>">
-                            <h4><?php echo $p->post_title; ?></h4>
+                        <div class="board-program-card" data-title="<?php echo strtolower($p->title); ?>">
+                            <h4><?php echo esc_html($p->title); ?></h4>
                             <p style="font-size: 12px; margin-bottom: 10px;">
-                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo $type; ?> |
-                                <strong><?php _e('Code:', 'board'); ?></strong> <?php echo $code; ?>
+                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($p->type); ?> |
+                                <strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($p->code); ?>
                             </p>
-                            <p style="font-size: 13px;"><?php echo wp_trim_words($p->post_content, 15); ?></p>
+                            <p style="font-size: 13px;"><?php echo wp_trim_words($p->description, 15); ?></p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
                                 <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
-                                <button class="board-btn-black board-btn-small board-btn-outline delete-program" data-id="<?php echo $p->ID; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-outline delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -327,7 +330,15 @@ $user = wp_get_current_user();
         <?php if ($tab == 'exams') : ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Manage Exams', 'board'); ?></h3>
-                <button class="board-btn-black" id="open-add-exam" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Create Exam', 'board'); ?></button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: flex; gap: 5px; align-items: center;">
+                        <?php wp_nonce_field('board_import_nonce'); ?>
+                        <input type="hidden" name="action" value="board_import_exams">
+                        <input type="file" name="import_file" style="font-size: 11px;" required>
+                        <button type="submit" class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 11px;"><?php _e('Import CSV', 'board'); ?></button>
+                    </form>
+                    <button class="board-btn-black" id="open-add-exam" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Create Exam', 'board'); ?></button>
+                </div>
             </div>
 
             <div style="margin-bottom: 30px; max-width: 100%; position: relative;">
@@ -346,7 +357,7 @@ $user = wp_get_current_user();
                         <div class="board-form-field">
                             <select name="program_id">
                                 <option value=""><?php _e('Link to Program (Optional)', 'board'); ?></option>
-                                <?php foreach($progs as $p) echo "<option value='{$p->ID}'>{$p->post_title}</option>"; ?>
+                                <?php foreach($progs as $p) echo "<option value='{$p->id}'>{$p->title}</option>"; ?>
                             </select>
                         </div>
                         <div class="board-form-field"><input type="date" name="exam_due"></div>
@@ -369,8 +380,8 @@ $user = wp_get_current_user();
                     <select name="exam_id" required>
                         <option value=""><?php _e('Select Exam', 'board'); ?></option>
                         <?php
-                        $exams = get_posts(array('post_type' => 'board_exam'));
-                        foreach($exams as $e) echo "<option value='{$e->ID}'>{$e->post_title}</option>";
+                        $exams = DB::get_exams();
+                        foreach($exams as $e) echo "<option value='{$e->id}'>{$e->title}</option>";
                         ?>
                     </select>
                 </div>
@@ -381,18 +392,19 @@ $user = wp_get_current_user();
         <?php if ($tab == 'requests') : ?>
             <h3><?php _e('Pending Membership Requests', 'board'); ?></h3>
             <table class="board-table">
-                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Country / Specialty', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
                 <tbody>
                     <?php if (!empty($pending_requests)) : ?>
                         <?php foreach ($pending_requests as $request) : ?>
                             <tr>
-                                <td><?php echo get_the_date('', $request->ID); ?></td>
-                                <td><?php echo get_post_meta($request->ID, 'full_name', true); ?></td>
-                                <td><button class="board-btn-black approve-request" data-id="<?php echo $request->ID; ?>" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Approve', 'board'); ?></button></td>
+                                <td><?php echo $request->created_at; ?></td>
+                                <td><?php echo esc_html($request->full_name); ?></td>
+                                <td><?php echo esc_html($request->country . ' / ' . $request->specialty); ?></td>
+                                <td><button class="board-btn-black approve-request" data-id="<?php echo $request->id; ?>" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Approve', 'board'); ?></button></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else : ?>
-                        <tr><td colspan="3" style="text-align: center;"><?php _e('No pending requests.', 'board'); ?></td></tr>
+                        <tr><td colspan="4" style="text-align: center;"><?php _e('No pending requests.', 'board'); ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
@@ -401,7 +413,13 @@ $user = wp_get_current_user();
         <?php if ($tab == 'certificates') : ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Certificates Management', 'board'); ?></h3>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: flex; gap: 5px; align-items: center;">
+                        <?php wp_nonce_field('board_import_nonce'); ?>
+                        <input type="hidden" name="action" value="board_import_certificates">
+                        <input type="file" name="import_file" style="font-size: 11px;" required>
+                        <button type="submit" class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 11px;"><?php _e('Import CSV', 'board'); ?></button>
+                    </form>
                     <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_certificates'), 'board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Certificates', 'board'); ?></a>
                     <button class="board-btn-black" id="open-generate-cert" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('New Certificate', 'board'); ?></button>
                 </div>
@@ -450,25 +468,21 @@ $user = wp_get_current_user();
 
             <div class="board-programs-grid" id="admin-certs-grid" style="padding: 0;">
                 <?php
-                $certs = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
+                $certs = DB::get_certificates();
                 if (!empty($certs)) :
                     foreach ($certs as $c) :
-                        $serial = get_post_meta($c->ID, 'serial_number', true);
-                        $type = get_post_meta($c->ID, 'cert_type', true);
-                        $status = get_post_meta($c->ID, 'cert_status', true) ?: 'active';
-                        $issue_date = get_post_meta($c->ID, 'issue_date', true);
                         ?>
-                        <div class="board-program-card" data-title="<?php echo strtolower($c->post_title . ' ' . $serial); ?>">
-                            <h4><?php echo esc_html($c->post_title); ?></h4>
+                        <div class="board-program-card" data-title="<?php echo strtolower($c->title . ' ' . $c->serial_number); ?>">
+                            <h4><?php echo esc_html($c->title); ?></h4>
                             <p style="font-size: 12px; margin-bottom: 10px;">
-                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo $type; ?> |
-                                <strong><?php _e('Status:', 'board'); ?></strong> <span style="text-transform: capitalize;"><?php echo $status; ?></span>
+                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($c->type); ?> |
+                                <strong><?php _e('Status:', 'board'); ?></strong> <span style="text-transform: capitalize;"><?php echo esc_html($c->status); ?></span>
                             </p>
-                            <p style="font-size: 13px;"><code><?php echo $serial; ?></code></p>
-                            <p style="font-size: 11px; margin-top: 5px; color: grey;"><?php _e('Issued:', 'board'); ?> <?php echo $issue_date; ?></p>
+                            <p style="font-size: 13px;"><code><?php echo esc_html($c->serial_number); ?></code></p>
+                            <p style="font-size: 11px; margin-top: 5px; color: grey;"><?php _e('Issued:', 'board'); ?> <?php echo $c->issue_date; ?></p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                <button class="board-btn-black board-btn-small board-btn-outline revoke-cert" data-id="<?php echo $c->ID; ?>" data-tooltip="<?php _e('Invalidate this certificate', 'board'); ?>"><?php _e('Revoke', 'board'); ?></button>
-                                <button class="board-btn-black board-btn-small board-btn-outline delete-cert" data-id="<?php echo $c->ID; ?>" data-tooltip="<?php _e('Permanently delete record', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-outline revoke-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Invalidate this certificate', 'board'); ?>"><?php _e('Revoke', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-outline delete-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Permanently delete record', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -513,19 +527,16 @@ $user = wp_get_current_user();
 
                     <?php
                     // Certificate Codes
-                    $cert_posts = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
-                    foreach ($cert_posts as $c) :
-                        $code = get_post_meta($c->ID, 'serial_number', true);
-                        $status = get_post_meta($c->ID, 'cert_status', true) ?: 'active';
-                        $uid = get_post_meta($c->ID, 'user_id', true);
-                        $uinfo = get_userdata($uid);
+                    $cert_list = DB::get_certificates();
+                    foreach ($cert_list as $c) :
+                        $uinfo = get_userdata($c->user_id);
                         ?>
                         <tr>
-                            <td><code><?php echo esc_html($code); ?></code></td>
+                            <td><code><?php echo esc_html($c->serial_number); ?></code></td>
                             <td><?php echo $uinfo ? esc_html($uinfo->display_name) : 'Unknown'; ?></td>
-                            <td><?php echo get_post_meta($c->ID, 'cert_type', true); ?></td>
-                            <td><span style="text-transform: capitalize;"><?php echo $status; ?></span></td>
-                            <td><button class="board-btn-black update-verify-status" data-type="cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 3px 8px; font-size: 10px; background: grey;"><?php _e('Revoke', 'board'); ?></button></td>
+                            <td><?php echo esc_html($c->type); ?></td>
+                            <td><span style="text-transform: capitalize;"><?php echo esc_html($c->status); ?></span></td>
+                            <td><button class="board-btn-black update-verify-status" data-type="cert" data-id="<?php echo $c->id; ?>" style="width: auto; padding: 3px 8px; font-size: 10px; background: grey;"><?php _e('Revoke', 'board'); ?></button></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -557,12 +568,15 @@ $user = wp_get_current_user();
         <?php if ($tab == 'logs') : ?>
             <h3><?php _e('Activity Logs', 'board'); ?></h3>
             <table class="board-table">
-                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th><th><?php _e('Details', 'board'); ?></th></tr></thead>
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th><th><?php _e('User', 'board'); ?></th><th><?php _e('Details', 'board'); ?></th></tr></thead>
                 <tbody>
                     <?php
-                    $logs = get_posts(array('post_type' => 'board_log', 'posts_per_page' => 20));
-                    foreach ($logs as $log) : ?>
-                        <tr><td><?php echo get_the_date('Y-m-d H:i', $log->ID); ?></td><td><?php echo $log->post_title; ?></td><td><?php echo $log->post_content; ?></td></tr>
+                    global $wpdb;
+                    $logs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}board_logs ORDER BY created_at DESC LIMIT 50");
+                    foreach ($logs as $log) :
+                        $uinfo = get_userdata($log->user_id);
+                        ?>
+                        <tr><td><?php echo $log->created_at; ?></td><td><?php echo esc_html($log->action); ?></td><td><?php echo $uinfo ? esc_html($uinfo->display_name) : 'System'; ?></td><td><?php echo esc_html($log->details); ?></td></tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
@@ -663,16 +677,16 @@ $user = wp_get_current_user();
                     <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th><th><?php _e('User', 'board'); ?></th><th><?php _e('Details', 'board'); ?></th></tr></thead>
                     <tbody>
                         <?php
-                        $logs = get_posts(array('post_type' => 'board_log', 'posts_per_page' => 50));
+                        global $wpdb;
+                        $logs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}board_logs ORDER BY created_at DESC LIMIT 100");
                         foreach ($logs as $log) :
-                            $uid = get_post_meta($log->ID, 'user_id', true);
-                            $uinfo = get_userdata($uid);
+                            $uinfo = get_userdata($log->user_id);
                             ?>
                             <tr>
-                                <td><?php echo get_the_date('Y-m-d H:i', $log->ID); ?></td>
-                                <td><strong><?php echo esc_html($log->post_title); ?></strong></td>
+                                <td><?php echo $log->created_at; ?></td>
+                                <td><strong><?php echo esc_html($log->action); ?></strong></td>
                                 <td><?php echo $uinfo ? esc_html($uinfo->display_name) : 'System'; ?></td>
-                                <td><?php echo esc_html($log->post_content); ?></td>
+                                <td><?php echo esc_html($log->details); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

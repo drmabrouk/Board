@@ -101,6 +101,10 @@ a:hover {
     color: var(--board-grey-dark);
 }
 
+/* Astra Theme Optimizations */
+.ast-separate-container .board-container { padding: 0; }
+.board-container * { box-sizing: border-box; }
+
 /* Buttons */
 .board-btn-black {
     background-color: var(--board-black);

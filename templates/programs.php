@@ -4,26 +4,21 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Real implementation: Query board_program CPT
+ * Custom Table Implementation
  */
 $programs = array();
-$programs_query = new WP_Query(array(
-    'post_type' => 'board_program',
-    'posts_per_page' => -1
-));
+$db_programs = \GSHB\Board\Database\Manager::get_programs();
 
-if ($programs_query->have_posts()) {
-    while ($programs_query->have_posts()) {
-        $programs_query->the_post();
+if (!empty($db_programs)) {
+    foreach ($db_programs as $p) {
         $programs[] = array(
-            'title' => get_the_title(),
-            'code'  => get_post_meta(get_the_ID(), 'program_code', true) ?: 'N/A',
-            'type'  => get_post_meta(get_the_ID(), 'program_type', true) ?: 'Course',
-            'dur'   => get_post_meta(get_the_ID(), 'program_duration', true) ?: 'N/A',
-            'desc'  => get_the_content()
+            'title' => $p->title,
+            'code'  => $p->code ?: 'N/A',
+            'type'  => $p->type ?: 'Course',
+            'dur'   => $p->duration ?: 'N/A',
+            'desc'  => $p->description
         );
     }
-    wp_reset_postdata();
 }
 ?>
 

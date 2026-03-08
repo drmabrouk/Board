@@ -1,14 +1,16 @@
 <?php
+namespace GSHB\Board\Core;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Activator {
+class Activator {
 
     public static function activate() {
         self::add_roles();
         self::create_pages();
+        \GSHB\Board\Database\Schema::create_tables();
         flush_rewrite_rules();
     }
 

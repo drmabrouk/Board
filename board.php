@@ -8,6 +8,8 @@
  * Domain Path: /languages
  */
 
+namespace GSHB\Board;
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -15,15 +17,25 @@ if (!defined('ABSPATH')) {
 define('BOARD_PATH', plugin_dir_path(__FILE__));
 define('BOARD_URL', plugin_dir_url(__FILE__));
 
-// Require the autoloader or individual classes
-require_once BOARD_PATH . 'includes/class-board-activator.php';
-require_once BOARD_PATH . 'includes/class-board-roles.php';
-require_once BOARD_PATH . 'includes/class-board-shortcodes.php';
-require_once BOARD_PATH . 'includes/class-board-auth.php';
-require_once BOARD_PATH . 'includes/class-board-branding.php';
-require_once BOARD_PATH . 'includes/class-board-cpt.php';
-require_once BOARD_PATH . 'includes/class-board-admin.php';
-require_once BOARD_PATH . 'includes/class-board-cron.php';
+/**
+ * Autoloader for GSHB Board
+ */
+spl_autoload_register(function ($class) {
+    $prefix = 'GSHB\\Board\\';
+    $base_dir = BOARD_PATH . 'includes/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
 
 /**
  * The main plugin class
@@ -41,26 +53,24 @@ class Board {
         add_action('template_redirect', array($this, 'enforce_page_access'));
 
         // Initialize components
-        new Board_Roles();
-        new Board_Shortcodes();
-        new Board_Auth();
-        new Board_Branding();
-        new Board_CPT();
-        new Board_Admin();
-        new Board_Cron();
+        new Core\Roles();
+        new UI\Shortcodes();
+        new Auth\Handler();
+        new UI\Branding();
+        new Database\CPT();
+        new Admin\Manager();
+        new Core\Cron();
     }
 
-    public static function log($title, $message = '', $user_id = 0) {
+    public static function log($action, $details = '', $user_id = 0) {
         if (!$user_id) $user_id = get_current_user_id();
-
-        wp_insert_post(array(
-            'post_title'   => $title,
-            'post_content' => $message,
-            'post_status'  => 'publish',
-            'post_type'    => 'board_log',
-            'meta_input'   => array(
-                'user_id' => $user_id
-            )
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_logs';
+        $wpdb->insert($table, array(
+            'user_id' => $user_id,
+            'action' => $action,
+            'details' => $details,
+            'ip_address' => $_SERVER['REMOTE_ADDR']
         ));
     }
 
@@ -77,17 +87,17 @@ class Board {
 
         $current_user_id = get_current_user_id();
 
-        if (is_page('cp') && !Board_Roles::can_access_cp($current_user_id)) {
+        if (is_page('cp') && !Core\Roles::can_access_cp($current_user_id)) {
             wp_redirect(home_url('/registration'));
             exit;
         }
 
-        if (is_page('mb') && !Board_Roles::can_access_mb($current_user_id)) {
+        if (is_page('mb') && !Core\Roles::can_access_mb($current_user_id)) {
             wp_redirect(home_url('/registration'));
             exit;
         }
 
-        if (is_page('cm-request') && !Board_Roles::is_member($current_user_id)) {
+        if (is_page('cm-request') && !Core\Roles::is_member($current_user_id)) {
             wp_redirect(home_url('/registration'));
             exit;
         }
@@ -100,16 +110,12 @@ class Board {
         // Handle Certificate Details Template
         $cert_serial = get_query_var('board_cert_serial');
         if ($cert_serial) {
-            $certs = get_posts(array(
-                'post_type' => 'board_certificate',
-                'meta_key' => 'serial_number',
-                'meta_value' => $cert_serial,
-                'posts_per_page' => 1
-            ));
+            global $wpdb;
+            $table = $wpdb->prefix . 'board_certificates';
+            $cert = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE serial_number = %s", $cert_serial));
 
-            if (!empty($certs)) {
-                $cert = $certs[0];
-                Board::log(__('Certificate Viewed', 'board'), sprintf(__('Certificate %s was viewed.', 'board'), $cert_serial));
+            if ($cert) {
+                self::log(__('Certificate Viewed', 'board'), sprintf(__('Certificate %s was viewed.', 'board'), $cert_serial));
                 include BOARD_PATH . 'templates/certificate-details.php';
                 exit;
             } else {
@@ -147,16 +153,16 @@ class Board {
 }
 
 // Activation and Deactivation hooks
-register_activation_hook(__FILE__, array('Board_Activator', 'activate'));
+register_activation_hook(__FILE__, array(__NAMESPACE__ . '\\Core\\Activator', 'activate'));
 register_deactivation_hook(__FILE__, function() {
-    Board_Activator::deactivate();
-    if (class_exists('Board_Cron')) {
-        Board_Cron::deactivate();
+    Core\Activator::deactivate();
+    if (class_exists(__NAMESPACE__ . '\\Core\\Cron')) {
+        Core\Cron::deactivate();
     }
 });
 
 // Initialize the plugin
 function run_board() {
-    $plugin = new Board();
+    new Board();
 }
 run_board();

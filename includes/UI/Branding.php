@@ -1,10 +1,11 @@
 <?php
+namespace GSHB\Board\UI;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Branding {
+class Branding {
 
     public function __construct() {
         // Hide WP version and generator tags

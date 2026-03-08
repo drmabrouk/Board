@@ -37,7 +37,7 @@ $user = wp_get_current_user();
                     <h2><?php _e('Account Overview', 'board'); ?></h2>
                     <p style="font-size: 14px; color: grey;"><?php _e('Manage your professional certifications and exam progress.', 'board'); ?></p>
                 </div>
-                <?php if (Board_Roles::is_certified_member()) : ?>
+                <?php if (\GSHB\Board\Core\Roles::is_certified_member()) : ?>
                     <div style="text-align: center; background: #000; color: #fff; padding: 10px 20px; border-radius: 0;">
                         <span class="dashicons dashicons-awards" style="font-size: 30px; width: 30px; height: 30px; display: block; margin: 0 auto 5px;"></span>
                         <small style="text-transform: uppercase; font-weight: 800; font-size: 10px; letter-spacing: 1px;"><?php _e('Certified Professional', 'board'); ?></small>
@@ -58,11 +58,11 @@ $user = wp_get_current_user();
                     <label style="display: block; font-size: 11px; font-weight: bold; text-transform: uppercase; color: grey;"><?php _e('Membership Progress', 'board'); ?></label>
                     <div style="margin-top: 8px;">
                         <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px;">
-                            <span><?php echo Board_Roles::is_certified_member() ? __('Full Access', 'board') : __('Pending Requirements', 'board'); ?></span>
-                            <span><?php echo Board_Roles::is_certified_member() ? '100%' : '25%'; ?></span>
+                            <span><?php echo \GSHB\Board\Core\Roles::is_certified_member() ? __('Full Access', 'board') : __('Pending Requirements', 'board'); ?></span>
+                            <span><?php echo \GSHB\Board\Core\Roles::is_certified_member() ? '100%' : '25%'; ?></span>
                         </div>
                         <div style="height: 6px; background: #eee; border: 1px solid #000;">
-                            <div style="height: 100%; width: <?php echo Board_Roles::is_certified_member() ? '100%' : '25%'; ?>; background: #000;"></div>
+                            <div style="height: 100%; width: <?php echo \GSHB\Board\Core\Roles::is_certified_member() ? '100%' : '25%'; ?>; background: #000;"></div>
                         </div>
                     </div>
                 </div>
@@ -87,10 +87,11 @@ $user = wp_get_current_user();
                                 $count = 0;
                                 foreach ($completed as $res) :
                                     if (++$count > 5) break;
-                                    $exam_title = get_the_title($res['exam_id']);
+                                    global $wpdb;
+                                    $exam_title = $wpdb->get_var($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_exams WHERE id = %d", $res['exam_id']));
                                     ?>
                                     <tr>
-                                        <td><?php echo $exam_title; ?></td>
+                                        <td><?php echo esc_html($exam_title); ?></td>
                                         <td><?php echo $res['date']; ?></td>
                                         <td><strong><?php echo $res['score']; ?>%</strong></td>
                                     </tr>
@@ -110,10 +111,13 @@ $user = wp_get_current_user();
                         $upcoming = array_diff($assigned, $completed_ids);
 
                         if (!empty($upcoming)) :
-                            foreach (array_slice($upcoming, 0, 3) as $ex_id) : ?>
+                            foreach (array_slice($upcoming, 0, 3) as $ex_id) :
+                                global $wpdb;
+                                $ex_data = $wpdb->get_row($wpdb->prepare("SELECT title, due_date FROM {$wpdb->prefix}board_exams WHERE id = %d", $ex_id));
+                                ?>
                                 <div style="padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #eee;">
-                                    <p style="margin: 0; font-weight: bold; font-size: 13px;"><?php echo get_the_title($ex_id); ?></p>
-                                    <small style="color: grey;"><?php echo get_post_meta($ex_id, 'exam_due', true) ?: __('No due date', 'board'); ?></small>
+                                    <p style="margin: 0; font-weight: bold; font-size: 13px;"><?php echo esc_html($ex_data->title); ?></p>
+                                    <small style="color: grey;"><?php echo $ex_data->due_date ?: __('No due date', 'board'); ?></small>
                                 </div>
                             <?php endforeach; ?>
                             <a href="<?php echo home_url('/qb'); ?>" class="board-btn-black board-btn-small" style="width: 100%;"><?php _e('Start Next Exam', 'board'); ?></a>
@@ -128,18 +132,14 @@ $user = wp_get_current_user();
             <h3><?php _e('Earned Credentials', 'board'); ?></h3>
             <div class="board-programs-grid" style="margin-bottom: 40px;">
                 <?php
-                $user_certs = get_posts(array(
-                    'post_type' => 'board_certificate',
-                    'meta_key' => 'user_id',
-                    'meta_value' => $user->ID
-                ));
+                $user_certs = \GSHB\Board\Database\Manager::get_certificates($user->ID);
                 if (!empty($user_certs)) :
                     foreach ($user_certs as $cert) :
-                        $status = get_post_meta($cert->ID, 'cert_status', true) ?: 'active';
-                        $serial = get_post_meta($cert->ID, 'serial_number', true);
+                        $status = $cert->status ?: 'active';
+                        $serial = $cert->serial_number;
                         ?>
                         <div class="board-program-card" style="padding: 20px; border-top: 5px solid #000;">
-                            <h4 style="margin: 0;"><?php echo $cert->post_title; ?></h4>
+                            <h4 style="margin: 0;"><?php echo $cert->title; ?></h4>
                             <p style="font-family: monospace; font-size: 13px; margin: 10px 0;"><?php echo $serial; ?></p>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                                 <span style="font-size: 10px; text-transform: uppercase; font-weight: bold; border-bottom: 1px solid #000;"><?php echo $status; ?></span>
@@ -168,18 +168,15 @@ $user = wp_get_current_user();
                 </thead>
                 <tbody>
                     <?php
-                    $requests = get_posts(array(
-                        'post_type' => 'board_request',
-                        'meta_key'  => 'user_id',
-                        'meta_value' => $user->ID
-                    ));
+                    global $wpdb;
+                    $requests = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}board_memberships WHERE user_id = %d ORDER BY created_at DESC", $user->ID));
                     if (!empty($requests)) :
                         foreach ($requests as $req) : ?>
                             <tr>
-                                <td>#<?php echo $req->ID; ?></td>
+                                <td>#<?php echo $req->id; ?></td>
                                 <td><?php _e('Membership', 'board'); ?></td>
-                                <td><?php echo get_the_date('', $req->ID); ?></td>
-                                <td><?php echo ucfirst(get_post_meta($req->ID, 'status', true)); ?></td>
+                                <td><?php echo $req->created_at; ?></td>
+                                <td style="text-transform: capitalize;"><?php echo $req->status; ?></td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else : ?>

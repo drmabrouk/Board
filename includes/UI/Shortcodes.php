@@ -1,10 +1,13 @@
 <?php
+namespace GSHB\Board\UI;
+
+use GSHB\Board\Core\Roles;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Shortcodes {
+class Shortcodes {
 
     public function __construct() {
         add_shortcode('board_info', array($this, 'render_info'));
@@ -33,14 +36,14 @@ class Board_Shortcodes {
     }
 
     public function render_cp() {
-        if (!Board_Roles::can_access_cp()) {
+        if (!Roles::can_access_cp()) {
             return '<p>' . __('You do not have permission to access the Control Panel.', 'board') . '</p>';
         }
         return $this->load_template('control-panel.php');
     }
 
     public function render_mb() {
-        if (!Board_Roles::can_access_mb()) {
+        if (!Roles::can_access_mb()) {
             return '<p>' . __('Please log in to access your member account.', 'board') . '</p>';
         }
         return $this->load_template('member-account.php');
@@ -76,26 +79,23 @@ class Board_Shortcodes {
             'serial' => ''
         ), $atts);
 
-        $query_args = array(
-            'post_type' => 'board_certificate',
-            'posts_per_page' => 1
-        );
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_certificates';
+        $cert = null;
 
         if (!empty($a['id'])) {
-            $query_args['p'] = intval($a['id']);
+            $cert = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", intval($a['id'])));
         } elseif (!empty($a['serial'])) {
-            $query_args['meta_key'] = 'serial_number';
-            $query_args['meta_value'] = sanitize_text_field($a['serial']);
+            $cert = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE serial_number = %s", sanitize_text_field($a['serial'])));
         } else {
             return '<p>' . __('Please provide a certificate ID or Serial Number.', 'board') . '</p>';
         }
 
-        $certs = get_posts($query_args);
-        if (empty($certs)) {
+        if (empty($cert)) {
             return '<p>' . __('Certificate not found.', 'board') . '</p>';
         }
 
-        return $this->load_template('certificate-card.php', array('cert' => $certs[0]));
+        return $this->load_template('certificate-card.php', array('cert' => $cert));
     }
 
     private function load_template($template_name, $args = array()) {
