@@ -58,9 +58,9 @@ if (!empty($users_query)) {
                         <td>
                             <?php
                             if ($member['expiry'] && strtotime($member['expiry']) > time()) {
-                                echo '<span style="font-weight: bold; border-bottom: 2px solid var(--board-black);">' . __('Active', 'board') . '</span>';
+                                echo '<span class="status-badge status-completed">' . __('Active', 'board') . '</span>';
                             } else {
-                                echo '<span style="color: var(--board-grey-dark);">' . __('Expired', 'board') . '</span>';
+                                echo '<span class="status-badge status-expired">' . __('Expired', 'board') . '</span>';
                             }
                             ?>
                         </td>

@@ -118,9 +118,10 @@ a:hover {
     transition: var(--board-transition);
 }
 
-.board-btn-black:hover {
-    background-color: var(--board-white);
-    color: var(--board-black) !important;
+.board-btn-black:hover, .board-btn-black:focus {
+    background-color: #333; /* Slightly lighter for focus visibility */
+    outline: 2px solid var(--board-black);
+    outline-offset: 2px;
 }
 
 .board-btn-outline {
@@ -177,9 +178,11 @@ a:hover {
 }
 
 .board-cp-sidebar ul li a:hover,
-.board-cp-sidebar ul li.active a {
+.board-cp-sidebar ul li.active a,
+.board-cp-sidebar ul li a:focus {
     background: var(--board-grey-dark);
     opacity: 1;
+    outline: none;
 }
 
 .board-cp-sidebar ul li a .dashicons {
@@ -272,8 +275,23 @@ a:hover {
 .board-programs-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-auto-rows: 1fr; /* Ensures uniform card heights */
     gap: 30px;
     margin-top: 20px;
+}
+
+.panel-collapsed .board-program-card-content {
+    display: none;
+}
+
+.board-expand-toggle {
+    cursor: pointer;
+    font-size: 18px;
+    transition: var(--board-transition);
+}
+
+.panel-collapsed .board-expand-toggle {
+    transform: rotate(-90deg);
 }
 
 .board-program-card {
@@ -284,6 +302,8 @@ a:hover {
     position: relative;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
 }
 
 .board-program-card:hover {
@@ -329,6 +349,30 @@ a:hover {
     bottom: calc(100% + 10px);
 }
 
+/* Modal */
+.board-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: boardFadeIn 0.3s ease;
+}
+
+.board-modal {
+    background: var(--board-white);
+    padding: 40px;
+    border: 1px solid var(--board-black);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+.board-modal h3 { margin-bottom: 20px; text-transform: uppercase; }
+.board-modal p { margin-bottom: 30px; }
+
 /* Notifications */
 #board-notifier {
     position: fixed;
@@ -363,6 +407,11 @@ a:hover {
     border: 1px solid var(--board-black);
     padding: 25px;
     text-align: center;
+    transition: var(--board-transition);
+}
+
+.board-stat-card:hover {
+    background: var(--board-grey-light);
 }
 
 .board-stat-card h3 {
@@ -376,6 +425,48 @@ a:hover {
     font-size: 32px;
     font-weight: 800;
 }
+
+/* Search Suggestions */
+.board-search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--board-white);
+    border: 1px solid var(--board-black);
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--board-grey);
+    font-size: 13px;
+    transition: var(--board-transition);
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-item:hover {
+    background: var(--board-grey-light);
+    padding-left: 20px;
+}
+
+/* Grayscale Statuses */
+.status-badge {
+    padding: 4px 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+    border: 1px solid var(--board-black);
+    display: inline-block;
+}
+
+.status-completed { background: var(--board-black); color: var(--board-white); }
+.status-pending { background: var(--board-grey); color: var(--board-black); }
+.status-expired { background: var(--board-white); color: var(--board-black); border-style: dashed; }
 
 /* Responsive Utilities */
 @media (max-width: 992px) {
@@ -406,5 +497,13 @@ a:hover {
     }
     .board-stat-card {
         margin-bottom: 15px;
+    }
+    .board-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .board-programs-grid {
+        grid-template-columns: 1fr;
     }
 }

@@ -51,15 +51,20 @@ if ($programs_query->have_posts()) {
 
     <div class="board-programs-grid">
         <?php foreach ($programs as $program) : ?>
-            <div class="board-program-card">
-                <h3><?php echo esc_html($program['title']); ?></h3>
-                <p style="font-size: 13px; margin-bottom: 10px;">
-                    <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($program['type']); ?> |
-                    <strong><?php _e('Duration:', 'board'); ?></strong> <?php echo esc_html($program['dur']); ?>
-                </p>
-                <p><strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($program['code']); ?></p>
-                <p style="margin-top: 10px; flex-grow: 1;"><?php echo esc_html($program['desc']); ?></p>
-                <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 25px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
+            <div class="board-program-card" data-tooltip="<?php echo esc_attr(wp_trim_words($program['desc'], 20)); ?>">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;"><?php echo esc_html($program['title']); ?></h3>
+                    <span class="dashicons dashicons-arrow-down-alt2 board-expand-toggle"></span>
+                </div>
+                <div class="board-program-card-content">
+                    <p style="font-size: 13px; margin: 15px 0 10px;">
+                        <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($program['type']); ?> |
+                        <strong><?php _e('Duration:', 'board'); ?></strong> <?php echo esc_html($program['dur']); ?>
+                    </p>
+                    <p><strong><?php _e('Code:', 'board'); ?></strong> <code><?php echo esc_html($program['code']); ?></code></p>
+                    <p style="margin-top: 10px; flex-grow: 1; font-size: 13px; color: var(--board-grey-dark);"><?php echo esc_html($program['desc']); ?></p>
+                    <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 25px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
+                </div>
             </div>
         <?php endforeach; ?>
     </div>

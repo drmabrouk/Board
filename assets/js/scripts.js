@@ -1,5 +1,28 @@
 jQuery(document).ready(function($) {
 
+    // Custom Modal System
+    function boardConfirm(title, message, onConfirm) {
+        var modalHtml = '<div class="board-modal-overlay">' +
+            '<div class="board-modal">' +
+            '<h3>' + title + '</h3>' +
+            '<p>' + message + '</p>' +
+            '<div style="display: flex; gap: 10px;">' +
+            '<button class="board-btn-black" id="modal-confirm">Confirm</button>' +
+            '<button class="board-btn-black board-btn-outline" id="modal-cancel">Cancel</button>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
+        $('body').append(modalHtml);
+        $('#modal-confirm').on('click', function() {
+            $('.board-modal-overlay').remove();
+            onConfirm();
+        });
+        $('#modal-cancel, .board-modal-overlay').on('click', function(e) {
+            if (e.target !== this) return;
+            $('.board-modal-overlay').remove();
+        });
+    }
+
     // Notification System
     function boardNotify(message, type = 'success') {
         if ($('#board-notifier').length === 0) {
@@ -93,6 +116,42 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Predictive Search Suggestions
+    $(document).on('keyup', '#user-search, #program-search, #exam-search, #cert-search', function() {
+        var input = $(this);
+        var val = input.val().toLowerCase();
+        var target = $('#' + input.attr('id') + '-suggestions');
+
+        if (val.length < 2) { target.hide(); return; }
+
+        var suggestions = [];
+        if (input.attr('id') === 'user-search') {
+            $('#users-table tbody tr:visible').each(function() { suggestions.push($(this).find('strong').text()); });
+        } else {
+            $('.board-program-card:visible').each(function() { suggestions.push($(this).find('h3, h4').text()); });
+        }
+
+        suggestions = [...new Set(suggestions)].filter(s => s.toLowerCase().includes(val)).slice(0, 5);
+
+        if (suggestions.length) {
+            target.html(suggestions.map(s => '<div class="suggestion-item">' + s + '</div>').join('')).show();
+        } else {
+            target.hide();
+        }
+    });
+
+    $(document).on('click', '.suggestion-item', function() {
+        var val = $(this).text();
+        var input = $(this).parent().siblings('input');
+        input.val(val).trigger('keyup');
+        $(this).parent().hide();
+    });
+
+    // Expandable Panels
+    $(document).on('click', '.board-expand-toggle', function() {
+        $(this).closest('.board-program-card').toggleClass('panel-collapsed');
+    });
+
     // Live Search: Programs
     $('#program-search, #program-type-filter').on('keyup change', function() {
         var searchVal = $('#program-search').val().toLowerCase();
@@ -158,9 +217,8 @@ jQuery(document).ready(function($) {
         else if (btn.hasClass('delete-cert')) { action = 'board_delete_certificate'; dataKey = 'cert_id'; }
         else if (btn.hasClass('revoke-cert')) { action = 'board_revoke_certificate'; dataKey = 'cert_id'; }
 
-        if (!confirm(confirmMsg)) return;
-
-        var postData = { action: action, nonce: board_ajax.nonce };
+        boardConfirm('Confirm Action', confirmMsg, function() {
+            var postData = { action: action, nonce: board_ajax.nonce };
         postData[dataKey] = id;
 
         $.post(board_ajax.ajax_url, postData, function(response) {
@@ -173,9 +231,10 @@ jQuery(document).ready(function($) {
                 } else {
                     btn.closest('tr, .board-program-card').fadeOut(300, function() { $(this).remove(); });
                 }
-            } else {
-                boardNotify(response.data.message, 'error');
-            }
+                } else {
+                    boardNotify(response.data.message, 'error');
+                }
+            });
         });
     });
 
@@ -298,16 +357,17 @@ jQuery(document).ready(function($) {
     $('.approve-request').on('click', function() {
         var btn = $(this);
         var requestId = btn.data('id');
-        if (!confirm('Are you sure you want to approve this request?')) return;
-        btn.prop('disabled', true).text('...');
-        $.post(board_ajax.ajax_url, { action: 'board_approve_request', nonce: board_ajax.nonce, request_id: requestId }, function(response) {
-            if (response.success) {
-                boardNotify(response.data.message);
-                btn.closest('tr').fadeOut(300, function() { $(this).remove(); });
-            } else {
-                boardNotify(response.data.message, 'error');
-                btn.prop('disabled', false).text('Approve');
-            }
+        boardConfirm('Approve Membership', 'Are you sure you want to approve this certified membership request?', function() {
+            btn.prop('disabled', true).text('...');
+            $.post(board_ajax.ajax_url, { action: 'board_approve_request', nonce: board_ajax.nonce, request_id: requestId }, function(response) {
+                if (response.success) {
+                    boardNotify(response.data.message);
+                    btn.closest('tr').fadeOut(300, function() { $(this).remove(); });
+                } else {
+                    boardNotify(response.data.message, 'error');
+                    btn.prop('disabled', false).text('Approve');
+                }
+            });
         });
     });
 

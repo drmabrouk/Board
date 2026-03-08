@@ -38,6 +38,15 @@ $user = wp_get_current_user();
     <main class="board-cp-main">
         <?php
         $tab = isset($_GET['cp_tab']) ? $_GET['cp_tab'] : 'dashboard';
+        ?>
+        <div class="board-breadcrumb" style="margin-bottom: 30px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: grey;">
+            <a href="?cp_tab=dashboard"><?php _e('Home', 'board'); ?></a>
+            <?php if ($tab != 'dashboard') : ?>
+                <span style="margin: 0 10px;">/</span>
+                <span style="color: black; font-weight: bold;"><?php echo ucfirst($tab); ?></span>
+            <?php endif; ?>
+        </div>
+        <?php
         $pending_requests = Board_Admin::get_pending_requests();
         $total_pending = count($pending_requests);
         ?>
@@ -50,6 +59,50 @@ $user = wp_get_current_user();
                 <div class="board-stat-card"><h3><?php _e('Pending Requests', 'board'); ?></h3><p class="board-stat-number"><?php echo $total_pending; ?></p></div>
                 <div class="board-stat-card"><h3><?php _e('Certificates', 'board'); ?></h3><p class="board-stat-number"><?php echo wp_count_posts('board_certificate')->publish; ?></p></div>
             </div>
+
+            <?php if (current_user_can('manage_options') || Board_Roles::is_board_admin()) : ?>
+            <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div class="board-program-card">
+                    <h4><?php _e('Action Center', 'board'); ?></h4>
+                    <p style="font-size: 13px; color: grey; margin-bottom: 20px;"><?php _e('Critical items requiring immediate attention.', 'board'); ?></p>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+                            <span><?php _e('Pending Member Upgrades', 'board'); ?></span>
+                            <strong><?php echo $total_pending; ?></strong>
+                        </li>
+                        <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+                            <span><?php _e('System Health', 'board'); ?></span>
+                            <span style="font-weight: bold; border-bottom: 2px solid black;"><?php _e('Optimal', 'board'); ?></span>
+                        </li>
+                    </ul>
+                    <a href="?cp_tab=requests" class="board-btn-black board-btn-small" style="margin-top: 20px;"><?php _e('Review Requests', 'board'); ?></a>
+                </div>
+                <div class="board-program-card">
+                    <h4><?php _e('Quick Statistics', 'board'); ?></h4>
+                    <div style="margin-top: 15px;">
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                                <span><?php _e('Program Utilization', 'board'); ?></span>
+                                <span>85%</span>
+                            </div>
+                            <div style="height: 6px; background: #eee; border: 1px solid #000;">
+                                <div style="height: 100%; width: 85%; background: #000;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                                <span><?php _e('Certificate Issuance Rate', 'board'); ?></span>
+                                <span>62%</span>
+                            </div>
+                            <div style="height: 6px; background: #eee; border: 1px solid #000;">
+                                <div style="height: 100%; width: 62%; background: #000;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div style="margin-top: 40px;">
                 <h4><?php _e('Weekly Enrollment Activity', 'board'); ?></h4>
                 <div style="display: flex; align-items: flex-end; gap: 10px; height: 150px; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black);">
@@ -114,9 +167,10 @@ $user = wp_get_current_user();
             </div>
 
             <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1;">
+                <div style="flex-grow: 1; position: relative;">
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Users', 'board'); ?></label>
-                    <input type="text" id="user-search" placeholder="<?php _e('Search by name, ID or email...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                    <input type="text" id="user-search" placeholder="<?php _e('Search by name, ID or email...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+                    <div id="user-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Role', 'board'); ?></label>
@@ -225,9 +279,10 @@ $user = wp_get_current_user();
             </div>
 
             <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1;">
+                <div style="flex-grow: 1; position: relative;">
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
-                    <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                    <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+                    <div id="program-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Type', 'board'); ?></label>
@@ -275,9 +330,10 @@ $user = wp_get_current_user();
                 <button class="board-btn-black" id="open-add-exam" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Create Exam', 'board'); ?></button>
             </div>
 
-            <div style="margin-bottom: 30px; max-width: 100%;">
+            <div style="margin-bottom: 30px; max-width: 100%; position: relative;">
                 <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Exams', 'board'); ?></label>
-                <input type="text" id="exam-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                <input type="text" id="exam-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+                <div id="exam-search-suggestions" class="board-search-suggestions"></div>
             </div>
 
             <!-- Add Exam Form -->
@@ -377,9 +433,10 @@ $user = wp_get_current_user();
             </div>
 
             <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1;">
+                <div style="flex-grow: 1; position: relative;">
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Certificates', 'board'); ?></label>
-                    <input type="text" id="cert-search" placeholder="<?php _e('Search by name, serial or type...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                    <input type="text" id="cert-search" placeholder="<?php _e('Search by name, serial or type...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+                    <div id="cert-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Status', 'board'); ?></label>
