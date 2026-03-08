@@ -8,6 +8,11 @@ class Board_Admin {
 
     public function __construct() {
         add_action('wp_ajax_board_approve_request', array($this, 'handle_approval'));
+        add_action('wp_ajax_board_save_general_settings', array($this, 'handle_save_general_settings'));
+        add_action('wp_ajax_board_save_design_settings', array($this, 'handle_save_design_settings'));
+        add_action('wp_ajax_board_save_advanced_settings', array($this, 'handle_save_advanced_settings'));
+        add_action('wp_ajax_board_export_json', array($this, 'handle_export_json'));
+        add_action('admin_post_board_restore_backup', array($this, 'handle_restore_backup'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
         add_action('wp_ajax_board_delete_program', array($this, 'handle_delete_program'));
         add_action('wp_ajax_board_assign_exam', array($this, 'handle_assign_exam'));
@@ -356,6 +361,84 @@ class Board_Admin {
         wp_mail($user->user_email, __('Certified Membership Approved - GSHB', 'board'), sprintf(__('Hello %s, your certified membership has been approved. Code: %s', 'board'), $user->display_name, $verify_code));
 
         wp_send_json_success(array('message' => __('Membership approved.', 'board'), 'code' => $verify_code));
+    }
+
+    public function handle_save_general_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+
+        update_option('board_org_name', sanitize_text_field($_POST['org_name']));
+        update_option('board_date_format', sanitize_text_field($_POST['date_format']));
+        update_option('board_default_role', sanitize_text_field($_POST['default_role']));
+        update_option('board_contact_email', sanitize_email($_POST['contact_email']));
+        update_option('board_notify_email', sanitize_email($_POST['notify_email']));
+
+        Board::log(__('Settings Updated', 'board'), __('General settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('General settings saved.', 'board')));
+    }
+
+    public function handle_save_advanced_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+        update_option('board_debug_mode', sanitize_text_field($_POST['debug_mode']));
+        Board::log(__('Settings Updated', 'board'), __('Advanced settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('Advanced settings saved.', 'board')));
+    }
+
+    public function handle_restore_backup() {
+        if (!current_user_can('manage_options')) wp_die(__('Unauthorized', 'board'));
+        if (!empty($_FILES['backup_file']['tmp_name'])) {
+            $data = json_decode(file_get_contents($_FILES['backup_file']['tmp_name']), true);
+            if ($data && isset($data['settings'])) {
+                foreach ($data['settings'] as $key => $val) {
+                    update_option('board_' . $key, $val);
+                }
+            }
+        }
+        wp_redirect(home_url('/cp?cp_tab=settings&set_tab=backup&restore=success'));
+        exit;
+    }
+
+    public function handle_export_json() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+
+        $data = array(
+            'settings' => array(
+                'org_name' => get_option('board_org_name'),
+                'contact_email' => get_option('board_contact_email'),
+                'primary_color' => get_option('board_primary_color')
+            ),
+            'counts' => array(
+                'users' => count(get_users()),
+                'certs' => wp_count_posts('board_certificate')->publish,
+                'programs' => wp_count_posts('board_program')->publish
+            )
+        );
+
+        Board::log(__('Backup Generated', 'board'), __('A full JSON backup was generated.', 'board'), get_current_user_id());
+        wp_send_json_success($data);
+    }
+
+    public function handle_save_design_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error();
+
+        if (!empty($_FILES['board_logo']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            $attachment_id = media_handle_upload('board_logo', 0);
+            if (!is_wp_error($attachment_id)) {
+                update_option('board_logo_url', wp_get_attachment_url($attachment_id));
+            }
+        }
+
+        update_option('board_primary_color', sanitize_hex_color($_POST['primary_color']));
+        update_option('board_custom_css', wp_strip_all_tags($_POST['custom_css']));
+
+        Board::log(__('Design Updated', 'board'), __('Design and branding settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('Design settings saved.', 'board')));
     }
 
     public static function get_pending_requests() {

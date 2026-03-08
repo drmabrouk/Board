@@ -344,12 +344,121 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'settings') : ?>
-            <h3><?php _e('Plugin Settings', 'board'); ?></h3>
-            <div class="board-form-field">
-                <label><?php _e('Visual Identity Primary Color', 'board'); ?></label>
-                <input type="text" value="#000000" disabled>
+            <h3><?php _e('System Settings', 'board'); ?></h3>
+            <?php $set_tab = isset($_GET['set_tab']) ? $_GET['set_tab'] : 'general'; ?>
+
+            <div style="display: flex; border-bottom: 1px solid var(--board-black); margin-bottom: 20px; overflow-x: auto;">
+                <a href="?cp_tab=settings&set_tab=general" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'general' ? 'background: #eee;' : ''; ?>"><?php _e('General', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=design" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'design' ? 'background: #eee;' : ''; ?>"><?php _e('Design & Branding', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=logs" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'logs' ? 'background: #eee;' : ''; ?>"><?php _e('Activity Logs', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=backup" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'backup' ? 'background: #eee;' : ''; ?>"><?php _e('Backup & Portability', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=advanced" style="padding: 10px 20px; text-decoration: none; color: black; <?php echo $set_tab == 'advanced' ? 'background: #eee;' : ''; ?>"><?php _e('Advanced', 'board'); ?></a>
             </div>
-            <button class="board-btn-black" style="width: auto;"><?php _e('Save Settings', 'board'); ?></button>
+
+            <?php if ($set_tab == 'general') : ?>
+                <form id="board-general-settings-form">
+                    <div class="board-form-field">
+                        <label><?php _e('Organization Name', 'board'); ?></label>
+                        <input type="text" name="org_name" value="<?php echo esc_attr(get_option('board_org_name', 'GSHB')); ?>">
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Date Format', 'board'); ?></label>
+                        <input type="text" name="date_format" value="<?php echo esc_attr(get_option('board_date_format', 'Y-m-d')); ?>">
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Default User Role', 'board'); ?></label>
+                        <select name="default_role">
+                            <option value="board_member" <?php selected(get_option('board_default_role'), 'board_member'); ?>><?php _e('Member', 'board'); ?></option>
+                            <option value="certified_member" <?php selected(get_option('board_default_role'), 'certified_member'); ?>><?php _e('Certified Member', 'board'); ?></option>
+                        </select>
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Contact Email', 'board'); ?></label>
+                        <input type="email" name="contact_email" value="<?php echo esc_attr(get_option('board_contact_email', get_option('admin_email'))); ?>">
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Notification Email', 'board'); ?></label>
+                        <input type="email" name="notify_email" value="<?php echo esc_attr(get_option('board_notify_email', get_option('admin_email'))); ?>">
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save General Settings', 'board'); ?></button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'design') : ?>
+                <form id="board-design-settings-form" enctype="multipart/form-data">
+                    <div class="board-form-field">
+                        <label><?php _e('Upload Logo', 'board'); ?></label>
+                        <input type="file" name="board_logo">
+                        <?php if ($logo_url = get_option('board_logo_url')) : ?>
+                            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px;">
+                        <?php endif; ?>
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Primary Color (Monochrome)', 'board'); ?></label>
+                        <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Custom CSS', 'board'); ?></label>
+                        <textarea name="custom_css" rows="5"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Update Visual Identity', 'board'); ?></button>
+                </form>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'logs') : ?>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h4><?php _e('Audit Logs', 'board'); ?></h4>
+                    <input type="text" id="log-search" placeholder="<?php _e('Search logs...', 'board'); ?>" style="padding: 8px; border: 1px solid var(--board-black);">
+                </div>
+                <table class="board-table" id="audit-logs-table">
+                    <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th><th><?php _e('User', 'board'); ?></th><th><?php _e('Details', 'board'); ?></th></tr></thead>
+                    <tbody>
+                        <?php
+                        $logs = get_posts(array('post_type' => 'board_log', 'posts_per_page' => 50));
+                        foreach ($logs as $log) :
+                            $uid = get_post_meta($log->ID, 'user_id', true);
+                            $uinfo = get_userdata($uid);
+                            ?>
+                            <tr>
+                                <td><?php echo get_the_date('Y-m-d H:i', $log->ID); ?></td>
+                                <td><strong><?php echo esc_html($log->post_title); ?></strong></td>
+                                <td><?php echo $uinfo ? esc_html($uinfo->display_name) : 'System'; ?></td>
+                                <td><?php echo esc_html($log->post_content); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'backup') : ?>
+                <h4><?php _e('Data Portability', 'board'); ?></h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="board-btn-black" id="board-full-backup-json" style="width: auto;"><?php _e('Full Backup (JSON)', 'board'); ?></button>
+                    <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: inline-flex; gap: 10px;">
+                        <input type="hidden" name="action" value="board_restore_backup">
+                        <input type="file" name="backup_file" required style="font-size: 11px;">
+                        <button type="submit" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Restore Data', 'board'); ?></button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'advanced') : ?>
+                <h4><?php _e('Advanced Configuration', 'board'); ?></h4>
+                <form id="board-advanced-settings-form">
+                    <div class="board-form-field">
+                        <label><?php _e('Debug Mode', 'board'); ?></label>
+                        <select name="debug_mode">
+                            <option value="off"><?php _e('Off', 'board'); ?></option>
+                            <option value="on"><?php _e('On (Logging)', 'board'); ?></option>
+                        </select>
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Verification API Endpoint', 'board'); ?></label>
+                        <input type="text" value="<?php echo home_url('/wp-json/board/v1/verify'); ?>" disabled>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Advanced Settings', 'board'); ?></button>
+                </form>
+            <?php endif; ?>
         <?php endif; ?>
 
     </main>
@@ -357,6 +466,13 @@ $user = wp_get_current_user();
 
 <script>
 jQuery(document).ready(function($) {
+    $('#log-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        $('#audit-logs-table tbody tr').filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+        });
+    });
+
     $('#user-search').on('keyup', function() {
         var val = $(this).val().toLowerCase();
         $('#users-table tbody tr').filter(function() {
@@ -414,6 +530,55 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_assign_exam&nonce=' + board_ajax.nonce, function(response) {
             alert(response.data.message);
+        });
+    });
+
+    $('#board-general-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_general_settings&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+        });
+    });
+
+    $('#board-full-backup-json').on('click', function() {
+        var btn = $(this);
+        btn.prop('disabled', true).text('Generating...');
+        $.post(board_ajax.ajax_url, { action: 'board_export_json', nonce: board_ajax.nonce }, function(response) {
+            btn.prop('disabled', false).text('Full Backup (JSON)');
+            if (response.success) {
+                var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data));
+                var downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "gshb_backup.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            }
+        });
+    });
+
+    $('#board-advanced-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_save_advanced_settings&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+        });
+    });
+
+    $('#board-design-settings-form').on('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        formData.append('action', 'board_save_design_settings');
+        formData.append('nonce', board_ajax.nonce);
+        $.ajax({
+            url: board_ajax.ajax_url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                alert(response.data.message);
+                if(response.success) location.reload();
+            }
         });
     });
 
