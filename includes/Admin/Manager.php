@@ -189,9 +189,14 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
-        $user_id = intval($_POST['user_id']);
+        $user_id = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
         $type = sanitize_text_field($_POST['cert_type']);
-        $user = get_userdata($user_id);
+        $title = !empty($_POST['title']) ? sanitize_text_field($_POST['title']) : '';
+
+        if ($user_id && empty($title)) {
+            $user = get_userdata($user_id);
+            $title = $user->display_name . ' - ' . $type;
+        }
 
         $type_map = array(
             'Course' => 'CRS',
@@ -208,14 +213,29 @@ class Manager {
 
         DB::save_certificate(array(
             'user_id' => $user_id,
-            'title' => $user->display_name . ' - ' . $type,
+            'title' => $title,
             'serial_number' => $serial,
             'type' => $type,
             'status' => 'active'
         ));
 
-        Plugin::log(__('Certificate Generated', 'board'), sprintf(__('Certificate %s generated for user %d.', 'board'), $serial, $user_id));
+        Plugin::log(__('Certificate Generated', 'board'), sprintf(__('Certificate %s generated.', 'board'), $serial));
         wp_send_json_success(array('message' => __('Certificate generated successfully.', 'board'), 'serial' => $serial));
+    }
+
+    public function handle_link_certificate() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $cert_id = intval($_POST['cert_id']);
+        $user_id = intval($_POST['user_id']);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_certificates';
+        $wpdb->update($table, array('user_id' => $user_id), array('id' => $cert_id));
+
+        Plugin::log(__('Certificate Linked', 'board'), sprintf(__('Certificate ID %d linked to user ID %d.', 'board'), $cert_id, $user_id));
+        wp_send_json_success(array('message' => __('Certificate linked successfully.', 'board')));
     }
 
     public function handle_update_role() {
