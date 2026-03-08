@@ -252,44 +252,71 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'certificates') : ?>
-            <h3><?php _e('Generate Certificate', 'board'); ?></h3>
-            <form id="board-generate-cert-form" style="margin-bottom: 40px;">
-                <div class="board-form-field">
-                    <select name="user_id" required>
-                        <option value=""><?php _e('Select User', 'board'); ?></option>
-                        <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
-                    </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Certificates Management', 'board'); ?></h3>
+                <div style="display: flex; gap: 10px;">
+                    <a href="<?php echo admin_url('admin-post.php?action=board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Certificates', 'board'); ?></a>
+                    <button class="board-btn-black" id="open-generate-cert" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('New Certificate', 'board'); ?></button>
                 </div>
-                <div class="board-form-field">
-                    <select name="cert_type" required>
-                        <option value="Course"><?php _e('Course', 'board'); ?></option>
-                        <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
-                        <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
-                        <option value="Exam Certificate"><?php _e('Exam Certificate', 'board'); ?></option>
-                    </select>
-                </div>
-                <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Generate & Link', 'board'); ?></button>
-            </form>
+            </div>
 
-            <h3><?php _e('Active Certificates', 'board'); ?></h3>
-            <table class="board-table">
-                <thead><tr><th><?php _e('User', 'board'); ?></th><th><?php _e('Type', 'board'); ?></th><th><?php _e('Serial Number', 'board'); ?></th></tr></thead>
-                <tbody>
-                    <?php
-                    $certs = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
-                    if (!empty($certs)) :
-                        foreach ($certs as $c) : ?>
-                            <tr>
-                                <td><?php echo get_the_title($c->ID); ?></td>
-                                <td><?php echo get_post_meta($c->ID, 'cert_type', true); ?></td>
-                                <td><code><?php echo get_post_meta($c->ID, 'serial_number', true); ?></code></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php else : ?>
-                        <tr><td colspan="3" style="text-align: center;"><?php _e('No certificates issued yet.', 'board'); ?></td></tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+            <div id="generate-cert-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
+                <h4><?php _e('Generate & Link', 'board'); ?></h4>
+                <form id="board-generate-cert-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="board-form-field">
+                            <select name="user_id" required>
+                                <option value=""><?php _e('Select User', 'board'); ?></option>
+                                <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
+                            </select>
+                        </div>
+                        <div class="board-form-field">
+                            <select name="cert_type" required>
+                                <option value="Course"><?php _e('Course', 'board'); ?></option>
+                                <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                                <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                                <option value="Exam Certificate"><?php _e('Exam Certificate', 'board'); ?></option>
+                                <option value="Membership"><?php _e('Membership', 'board'); ?></option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Generate Code & Link', 'board'); ?></button>
+                    <button type="button" id="close-generate-cert" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                </form>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="cert-search" placeholder="<?php _e('Search certificates...', 'board'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--board-black);">
+            </div>
+
+            <div class="board-programs-grid" id="admin-certs-grid" style="padding: 0;">
+                <?php
+                $certs = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
+                if (!empty($certs)) :
+                    foreach ($certs as $c) :
+                        $serial = get_post_meta($c->ID, 'serial_number', true);
+                        $type = get_post_meta($c->ID, 'cert_type', true);
+                        $status = get_post_meta($c->ID, 'cert_status', true) ?: 'active';
+                        $issue_date = get_post_meta($c->ID, 'issue_date', true);
+                        ?>
+                        <div class="board-program-card" data-title="<?php echo strtolower($c->post_title . ' ' . $serial); ?>">
+                            <h4><?php echo esc_html($c->post_title); ?></h4>
+                            <p style="font-size: 12px; margin-bottom: 10px;">
+                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo $type; ?> |
+                                <strong><?php _e('Status:', 'board'); ?></strong> <span style="text-transform: capitalize;"><?php echo $status; ?></span>
+                            </p>
+                            <p style="font-size: 13px;"><code><?php echo $serial; ?></code></p>
+                            <p style="font-size: 11px; margin-top: 5px; color: grey;"><?php _e('Issued:', 'board'); ?> <?php echo $issue_date; ?></p>
+                            <div style="margin-top: 15px; display: flex; gap: 5px;">
+                                <button class="board-btn-black revoke-cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: orange;"><?php _e('Revoke', 'board'); ?></button>
+                                <button class="board-btn-black delete-cert" data-id="<?php echo $c->ID; ?>" style="width: auto; padding: 5px 10px; font-size: 10px; background: red;"><?php _e('Delete', 'board'); ?></button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <p><?php _e('No certificates issued yet.', 'board'); ?></p>
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
 
         <?php if ($tab == 'verification') : ?>
@@ -390,9 +417,37 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
+    $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
+
+    $('#cert-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        $('#admin-certs-grid .board-program-card').filter(function() {
+            $(this).toggle($(this).data('title').indexOf(val) > -1);
+        });
+    });
+
     $('#board-generate-cert-form').on('submit', function(e) {
         e.preventDefault();
         $.post(board_ajax.ajax_url, $(this).serialize() + '&action=board_generate_certificate&nonce=' + board_ajax.nonce, function(response) {
+            alert(response.data.message);
+            if(response.success) location.reload();
+        });
+    });
+
+    $('.revoke-cert').on('click', function() {
+        var id = $(this).data('id');
+        if (!confirm('<?php _e('Revoke this certificate?', 'board'); ?>')) return;
+        $.post(board_ajax.ajax_url, { action: 'board_revoke_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
+            alert(response.data.message);
+            location.reload();
+        });
+    });
+
+    $('.delete-cert').on('click', function() {
+        var id = $(this).data('id');
+        if (!confirm('<?php _e('Delete record?', 'board'); ?>')) return;
+        $.post(board_ajax.ajax_url, { action: 'board_delete_certificate', nonce: board_ajax.nonce, cert_id: id }, function(response) {
             alert(response.data.message);
             location.reload();
         });

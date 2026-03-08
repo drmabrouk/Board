@@ -14,11 +14,58 @@ class Board_Admin {
         add_action('wp_ajax_board_update_user_role', array($this, 'handle_update_role'));
         add_action('wp_ajax_board_update_user_status', array($this, 'handle_update_status'));
         add_action('wp_ajax_board_generate_certificate', array($this, 'handle_generate_certificate'));
+        add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
+        add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
         add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
         add_action('admin_post_board_export_programs', array($this, 'handle_export_programs'));
+        add_action('admin_post_board_export_certificates', array($this, 'handle_export_certificates'));
         add_action('admin_post_board_import_users', array($this, 'handle_import_users'));
+    }
+
+    public function handle_export_certificates() {
+        if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=gshb_certificates_export.csv');
+        $output = fopen('php://output', 'w');
+        fputcsv($output, array('ID', 'Title', 'Type', 'Serial Number', 'Status', 'Issue Date'));
+
+        $certs = get_posts(array('post_type' => 'board_certificate', 'posts_per_page' => -1));
+        foreach ($certs as $c) {
+            fputcsv($output, array(
+                $c->ID,
+                $c->post_title,
+                get_post_meta($c->ID, 'cert_type', true),
+                get_post_meta($c->ID, 'serial_number', true),
+                get_post_meta($c->ID, 'cert_status', true) ?: 'active',
+                get_post_meta($c->ID, 'issue_date', true)
+            ));
+        }
+        fclose($output);
+        exit;
+    }
+
+    public function handle_revoke_certificate() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['cert_id']);
+        update_post_meta($id, 'cert_status', 'revoked');
+        Board::log(__('Certificate Revoked', 'board'), sprintf(__('Certificate ID %d revoked.', $id)));
+        wp_send_json_success(array('message' => __('Certificate revoked.', 'board')));
+    }
+
+    public function handle_delete_certificate() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['cert_id']);
+        if (wp_delete_post($id)) {
+            Board::log(__('Certificate Deleted', 'board'), sprintf(__('Certificate ID %d deleted.', $id)));
+            wp_send_json_success(array('message' => __('Record deleted.', 'board')));
+        } else {
+            wp_send_json_error();
+        }
     }
 
     public function handle_export_programs() {
@@ -108,7 +155,16 @@ class Board_Admin {
         $type = sanitize_text_field($_POST['cert_type']);
         $user = get_userdata($user_id);
 
-        $serial = 'GSHB-' . strtoupper(wp_generate_password(10, false));
+        $type_map = array(
+            'Course' => 'CRS',
+            'Diploma' => 'DIP',
+            'Board Membership' => 'BRD',
+            'Exam Certificate' => 'EXM',
+            'Membership' => 'MEM'
+        );
+        $prefix = isset($type_map[$type]) ? $type_map[$type] : 'GEN';
+        $count = wp_count_posts('board_certificate')->publish + 1;
+        $serial = 'GSHB-' . $prefix . '-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
         $cert_id = wp_insert_post(array(
             'post_title' => $user->display_name . ' - ' . $type,
@@ -117,7 +173,9 @@ class Board_Admin {
             'meta_input' => array(
                 'user_id' => $user_id,
                 'cert_type' => $type,
-                'serial_number' => $serial
+                'serial_number' => $serial,
+                'cert_status' => 'active',
+                'issue_date' => current_time('mysql')
             )
         ));
 

@@ -74,6 +74,38 @@ $user = wp_get_current_user();
                 </tbody>
             </table>
 
+            <h3><?php _e('My Certificates', 'board'); ?></h3>
+            <table class="board-table" style="margin-bottom: 30px;">
+                <thead>
+                    <tr>
+                        <th><?php _e('Certificate', 'board'); ?></th>
+                        <th><?php _e('Serial Number', 'board'); ?></th>
+                        <th><?php _e('Status', 'board'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $user_certs = get_posts(array(
+                        'post_type' => 'board_certificate',
+                        'meta_key' => 'user_id',
+                        'meta_value' => $user->ID
+                    ));
+                    if (!empty($user_certs)) :
+                        foreach ($user_certs as $cert) :
+                            $status = get_post_meta($cert->ID, 'cert_status', true) ?: 'active';
+                            ?>
+                            <tr>
+                                <td><?php echo $cert->post_title; ?></td>
+                                <td><code><?php echo get_post_meta($cert->ID, 'serial_number', true); ?></code></td>
+                                <td style="text-transform: capitalize;"><?php echo $status; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="3" style="text-align: center;"><?php _e('No certificates issued yet.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
             <h3><?php _e('Recent Requests', 'board'); ?></h3>
             <table class="board-table">
                 <thead>

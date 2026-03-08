@@ -56,7 +56,7 @@ class Board_CPT {
             'labels'      => array('name' => __('Certificates', 'board')),
             'public'      => false,
             'show_ui'     => true,
-            'supports'    => array('title'),
+            'supports'    => array('title', 'thumbnail'),
             'show_in_rest' => false,
             'show_in_menu' => false
         ));
