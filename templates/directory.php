@@ -4,23 +4,23 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Real implementation: Query users with 'certified_member' role
+ * Custom Table Integration
  */
 $certified_members = array();
-$users_query = get_users(array(
-    'role' => 'certified_member',
-    'fields' => 'all'
-));
+$db_members = \GSHB\Board\Database\Manager::get_memberships('active');
 
-if (!empty($users_query)) {
-    foreach ($users_query as $user) {
-        $certified_members[] = array(
-            'name' => $user->display_name,
-            'id' => get_user_meta($user->ID, 'verification_code', true) ?: 'N/A',
-            'country' => get_user_meta($user->ID, 'country', true) ?: 'N/A',
-            'specialty' => get_user_meta($user->ID, 'specialty', true) ?: 'N/A',
-            'expiry' => get_user_meta($user->ID, 'membership_expiry_date', true)
-        );
+if (!empty($db_members)) {
+    foreach ($db_members as $m) {
+        $user = get_userdata($m->user_id);
+        if ($user) {
+            $certified_members[] = array(
+                'name' => $user->display_name,
+                'id' => get_user_meta($user->ID, 'verification_code', true) ?: 'N/A',
+                'country' => $m->country ?: 'N/A',
+                'specialty' => $m->specialty ?: 'N/A',
+                'expiry' => $m->expiry_date
+            );
+        }
     }
 }
 
@@ -58,9 +58,9 @@ if (!empty($users_query)) {
                         <td>
                             <?php
                             if ($member['expiry'] && strtotime($member['expiry']) > time()) {
-                                echo '<span style="color: green; font-weight: bold;">' . __('Active', 'board') . '</span>';
+                                echo '<span class="status-badge status-completed">' . __('Active', 'board') . '</span>';
                             } else {
-                                echo '<span style="color: grey;">' . __('Expired', 'board') . '</span>';
+                                echo '<span class="status-badge status-expired">' . __('Expired', 'board') . '</span>';
                             }
                             ?>
                         </td>

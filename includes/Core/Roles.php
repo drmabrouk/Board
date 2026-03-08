@@ -1,10 +1,11 @@
 <?php
+namespace GSHB\Board\Core;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Roles {
+class Roles {
 
     public function __construct() {
         add_action('after_setup_theme', array($this, 'hide_admin_bar'));
@@ -85,7 +86,7 @@ class Board_Roles {
             $user = get_userdata($user_id);
         }
 
-        if (!$user || !($user instanceof WP_User)) {
+        if (!$user || !($user instanceof \WP_User)) {
             return false;
         }
 

@@ -4,20 +4,20 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Variables available from board.php: $cert
+ * Variables available from board.php: $cert (object from custom table)
  */
-$serial = get_post_meta($cert->ID, 'serial_number', true);
-$type = get_post_meta($cert->ID, 'cert_type', true);
-$status = get_post_meta($cert->ID, 'cert_status', true) ?: 'active';
-$issue_date = get_post_meta($cert->ID, 'issue_date', true);
-$user_id = get_post_meta($cert->ID, 'user_id', true);
+$serial = $cert->serial_number;
+$type = $cert->type;
+$status = $cert->status ?: 'active';
+$issue_date = $cert->issue_date;
+$user_id = $cert->user_id;
 $uinfo = get_userdata($user_id);
 
 $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=" . urlencode(home_url("/certificate/{$serial}"));
 
 // Access Control
 $current_user_id = get_current_user_id();
-$is_admin = Board_Roles::can_access_cp($current_user_id);
+$is_admin = \GSHB\Board\Core\Roles::can_access_cp($current_user_id);
 $is_owner = ($current_user_id == $user_id);
 
 get_header();
@@ -29,7 +29,7 @@ get_header();
         <!-- Header Section -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--board-black); padding-bottom: 30px; margin-bottom: 30px;">
             <div>
-                <h1 style="margin: 0; font-size: 32px; letter-spacing: -1px;"><?php echo esc_html($cert->post_title); ?></h1>
+                <h1 style="margin: 0; font-size: 32px; letter-spacing: -1px;"><?php echo esc_html($cert->title); ?></h1>
                 <p style="font-size: 18px; margin-top: 10px; opacity: 0.8;"><strong><?php _e('Official Certification', 'board'); ?></strong></p>
                 <div style="display: inline-block; padding: 6px 20px; background: <?php echo ($status == 'active' ? 'var(--board-black)' : 'var(--board-grey-dark)'); ?>; color: white; font-size: 12px; font-weight: bold; text-transform: uppercase; margin-top: 10px; letter-spacing: 1px;">
                     <?php echo esc_html($status); ?>
@@ -66,7 +66,12 @@ get_header();
             </div>
             <div style="text-align: center;">
                 <img src="<?php echo esc_url($qr_url); ?>" alt="QR Code" style="border: 1px solid var(--board-black); padding: 15px; background: white; margin-bottom: 15px;">
-                <p style="font-size: 11px; color: grey; text-transform: uppercase; letter-spacing: 1px;"><?php _e('Scan for digital verification', 'board'); ?></p>
+                <p style="font-size: 11px; color: grey; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px;"><?php _e('Scan for digital verification', 'board'); ?></p>
+
+                <div style="border-top: 1px solid #eee; padding-top: 20px;">
+                    <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=<?php echo urlencode($serial); ?>&scale=2&rotate=N&includetext=true" alt="Barcode" style="max-width: 100%;">
+                    <p style="font-size: 10px; color: grey; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px;"><?php _e('Standardized Barcode', 'board'); ?></p>
+                </div>
             </div>
         </div>
 
@@ -81,7 +86,7 @@ get_header();
 
         <!-- Audit History -->
         <div style="margin-top: 40px; font-size: 12px; color: grey;">
-            <p><?php printf(__('Recorded on: %s', 'board'), get_the_date('Y-m-d H:i', $cert->ID)); ?></p>
+            <p><?php printf(__('Recorded on: %s', 'board'), $issue_date); ?></p>
             <p><?php _e('This certificate is a property of GSHB and is issued for professional recognition.', 'board'); ?></p>
         </div>
 

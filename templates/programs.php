@@ -4,26 +4,21 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Real implementation: Query board_program CPT
+ * Custom Table Implementation
  */
 $programs = array();
-$programs_query = new WP_Query(array(
-    'post_type' => 'board_program',
-    'posts_per_page' => -1
-));
+$db_programs = \GSHB\Board\Database\Manager::get_programs();
 
-if ($programs_query->have_posts()) {
-    while ($programs_query->have_posts()) {
-        $programs_query->the_post();
+if (!empty($db_programs)) {
+    foreach ($db_programs as $p) {
         $programs[] = array(
-            'title' => get_the_title(),
-            'code'  => get_post_meta(get_the_ID(), 'program_code', true) ?: 'N/A',
-            'type'  => get_post_meta(get_the_ID(), 'program_type', true) ?: 'Course',
-            'dur'   => get_post_meta(get_the_ID(), 'program_duration', true) ?: 'N/A',
-            'desc'  => get_the_content()
+            'title' => $p->title,
+            'code'  => $p->code ?: 'N/A',
+            'type'  => $p->type ?: 'Course',
+            'dur'   => $p->duration ?: 'N/A',
+            'desc'  => $p->description
         );
     }
-    wp_reset_postdata();
 }
 ?>
 
@@ -51,15 +46,20 @@ if ($programs_query->have_posts()) {
 
     <div class="board-programs-grid">
         <?php foreach ($programs as $program) : ?>
-            <div class="board-program-card">
-                <h3><?php echo esc_html($program['title']); ?></h3>
-                <p style="font-size: 13px; margin-bottom: 10px;">
-                    <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($program['type']); ?> |
-                    <strong><?php _e('Duration:', 'board'); ?></strong> <?php echo esc_html($program['dur']); ?>
-                </p>
-                <p><strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($program['code']); ?></p>
-                <p style="margin-top: 10px; flex-grow: 1;"><?php echo esc_html($program['desc']); ?></p>
-                <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 25px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
+            <div class="board-program-card" data-tooltip="<?php echo esc_attr(wp_trim_words($program['desc'], 20)); ?>">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;"><?php echo esc_html($program['title']); ?></h3>
+                    <span class="dashicons dashicons-arrow-down-alt2 board-expand-toggle"></span>
+                </div>
+                <div class="board-program-card-content">
+                    <p style="font-size: 13px; margin: 15px 0 10px;">
+                        <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($program['type']); ?> |
+                        <strong><?php _e('Duration:', 'board'); ?></strong> <?php echo esc_html($program['dur']); ?>
+                    </p>
+                    <p><strong><?php _e('Code:', 'board'); ?></strong> <code><?php echo esc_html($program['code']); ?></code></p>
+                    <p style="margin-top: 10px; flex-grow: 1; font-size: 13px; color: var(--board-grey-dark);"><?php echo esc_html($program['desc']); ?></p>
+                    <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="display: block; text-decoration: none; margin-top: 25px; text-align: center;"><?php _e('View Exams', 'board'); ?></a>
+                </div>
             </div>
         <?php endforeach; ?>
     </div>

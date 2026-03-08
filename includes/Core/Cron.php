@@ -1,10 +1,11 @@
 <?php
+namespace GSHB\Board\Core;
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-class Board_Cron {
+class Cron {
 
     public function __construct() {
         add_action('board_daily_cleanup', array($this, 'check_membership_expiry'));
@@ -28,7 +29,7 @@ class Board_Cron {
         ));
 
         foreach ($users as $user) {
-            $u = new WP_User($user->ID);
+            $u = new \WP_User($user->ID);
             $u->set_role('board_member');
             update_user_meta($user->ID, 'membership_status', 'expired');
             // Log for debugging/admin
