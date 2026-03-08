@@ -18,7 +18,7 @@ class Board_CPT {
             'has_archive' => true,
             'supports'    => array('title', 'editor', 'thumbnail'),
             'show_in_rest' => true,
-            'menu_icon'   => 'dashicons-welcome-learn-more'
+            'show_in_menu' => false
         ));
 
         // Exams
@@ -28,7 +28,7 @@ class Board_CPT {
             'show_ui'     => true,
             'supports'    => array('title', 'editor'),
             'show_in_rest' => true,
-            'menu_icon'   => 'dashicons-clipboard'
+            'show_in_menu' => false
         ));
 
         // Membership Requests
@@ -38,7 +38,7 @@ class Board_CPT {
             'show_ui'     => true,
             'supports'    => array('title'),
             'show_in_rest' => false,
-            'menu_icon'   => 'dashicons-email-alt'
+            'show_in_menu' => false
         ));
 
         // Activity Logs
@@ -48,7 +48,7 @@ class Board_CPT {
             'show_ui'     => true,
             'supports'    => array('title', 'editor'),
             'show_in_rest' => false,
-            'menu_icon'   => 'dashicons-list-view'
+            'show_in_menu' => false
         ));
 
         // Certificates
@@ -58,7 +58,7 @@ class Board_CPT {
             'show_ui'     => true,
             'supports'    => array('title'),
             'show_in_rest' => false,
-            'menu_icon'   => 'dashicons-awards'
+            'show_in_menu' => false
         ));
     }
 }

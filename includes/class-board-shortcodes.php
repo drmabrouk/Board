@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 class Board_Shortcodes {
 
     public function __construct() {
+        add_shortcode('board_main', array($this, 'render_main'));
         add_shortcode('board_registration', array($this, 'render_registration'));
         add_shortcode('board_cp', array($this, 'render_cp'));
         add_shortcode('board_mb', array($this, 'render_mb'));
@@ -15,6 +16,10 @@ class Board_Shortcodes {
         add_shortcode('board_cm_request', array($this, 'render_cm_request'));
         add_shortcode('board_members', array($this, 'render_members'));
         add_shortcode('board_programs', array($this, 'render_programs'));
+    }
+
+    public function render_main() {
+        return $this->load_template('main-hub.php');
     }
 
     public function render_registration() {

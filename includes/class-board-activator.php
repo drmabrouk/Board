@@ -27,6 +27,11 @@ class Board_Activator {
 
     private static function create_pages() {
         $pages = array(
+            'board-hub' => array(
+                'title'   => 'GSHB Board Hub',
+                'content' => '[board_main]',
+                'slug'    => 'board-hub'
+            ),
             'registration' => array(
                 'title'   => 'Registration / Login',
                 'content' => '[board_registration]',

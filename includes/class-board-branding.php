@@ -18,6 +18,24 @@ class Board_Branding {
         // Remove WP version from scripts/styles
         add_filter('style_loader_src', array($this, 'remove_wp_version_strings'), 999);
         add_filter('script_loader_src', array($this, 'remove_wp_version_strings'), 999);
+
+        // Remove all WP sidebar menus for GSHB whitelabeling (only keep essential)
+        add_action('admin_menu', array($this, 'remove_admin_menus'), 999);
+    }
+
+    public function remove_admin_menus() {
+        if (!current_user_can('manage_options')) {
+            remove_menu_page('index.php');
+            remove_menu_page('edit.php');
+            remove_menu_page('upload.php');
+            remove_menu_page('edit.php?post_type=page');
+            remove_menu_page('edit-comments.php');
+            remove_menu_page('themes.php');
+            remove_menu_page('plugins.php');
+            remove_menu_page('users.php');
+            remove_menu_page('tools.php');
+            remove_menu_page('options-general.php');
+        }
     }
 
     public function custom_admin_footer() {
