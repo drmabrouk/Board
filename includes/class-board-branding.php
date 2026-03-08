@@ -31,6 +31,17 @@ class Board_Branding {
         remove_menu_page('edit.php?post_type=board_log');
         remove_menu_page('edit.php?post_type=board_certificate');
 
+        // Add a single top-level menu for GSHB
+        add_menu_page(
+            __('GSHB Board', 'board'),
+            __('GSHB Board', 'board'),
+            'manage_options',
+            'gshb-board',
+            array($this, 'render_plugin_info_page'),
+            'dashicons-awards',
+            30
+        );
+
         if (!current_user_can('manage_options')) {
             remove_menu_page('index.php');
             remove_menu_page('edit.php');
@@ -43,6 +54,10 @@ class Board_Branding {
             remove_menu_page('tools.php');
             remove_menu_page('options-general.php');
         }
+    }
+
+    public function render_plugin_info_page() {
+        include BOARD_PATH . 'templates/plugin-info.php';
     }
 
     public function custom_admin_footer() {

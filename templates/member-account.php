@@ -8,8 +8,11 @@ $user = wp_get_current_user();
 
 <div class="board-container">
     <div class="board-cp-header" style="margin-bottom: 30px;">
-        <div class="board-cp-logo">
-            <strong>GSHB</strong> <?php _e('Member Account', 'board'); ?>
+        <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px;">
+            <?php if ($logo_url = get_option('board_logo_url')) : ?>
+                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 30px;">
+            <?php endif; ?>
+            <strong><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?></strong> <?php _e('Member Account', 'board'); ?>
         </div>
         <div class="board-cp-user">
             <?php printf(__('Welcome, %s', 'board'), $user->display_name); ?>

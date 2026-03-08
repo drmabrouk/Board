@@ -30,6 +30,7 @@ class Board_Admin {
     }
 
     public function handle_export_certificates() {
+        check_admin_referer('board_export_certificates');
         if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -57,7 +58,7 @@ class Board_Admin {
         if (!Board_Roles::can_access_cp()) wp_send_json_error();
         $id = intval($_POST['cert_id']);
         update_post_meta($id, 'cert_status', 'revoked');
-        Board::log(__('Certificate Revoked', 'board'), sprintf(__('Certificate ID %d revoked.', $id)));
+        Board::log(__('Certificate Revoked', 'board'), sprintf(__('Certificate ID %d revoked.', 'board'), $id), get_current_user_id());
         wp_send_json_success(array('message' => __('Certificate revoked.', 'board')));
     }
 
@@ -66,7 +67,7 @@ class Board_Admin {
         if (!Board_Roles::can_access_cp()) wp_send_json_error();
         $id = intval($_POST['cert_id']);
         if (wp_delete_post($id)) {
-            Board::log(__('Certificate Deleted', 'board'), sprintf(__('Certificate ID %d deleted.', $id)));
+            Board::log(__('Certificate Deleted', 'board'), sprintf(__('Certificate ID %d deleted.', 'board'), $id), get_current_user_id());
             wp_send_json_success(array('message' => __('Record deleted.', 'board')));
         } else {
             wp_send_json_error();
@@ -74,6 +75,7 @@ class Board_Admin {
     }
 
     public function handle_export_programs() {
+        check_admin_referer('board_export_programs');
         if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -98,7 +100,7 @@ class Board_Admin {
 
     public function handle_add_user() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
 
         $user_login = sanitize_text_field($_POST['username']);
         $user_email = sanitize_email($_POST['email']);
@@ -125,7 +127,8 @@ class Board_Admin {
     }
 
     public function handle_import_users() {
-        if (!current_user_can('manage_options')) wp_die(__('Unauthorized', 'board'));
+        check_admin_referer('board_import_nonce');
+        if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
 
         if (!empty($_FILES['import_file']['tmp_name'])) {
             $file = fopen($_FILES['import_file']['tmp_name'], 'r');
@@ -192,7 +195,7 @@ class Board_Admin {
 
     public function handle_update_role() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
         $user_id = intval($_POST['user_id']);
         $role = sanitize_text_field($_POST['role']);
         $user = new WP_User($user_id);
@@ -203,7 +206,7 @@ class Board_Admin {
 
     public function handle_update_status() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
         $user_id = intval($_POST['user_id']);
         $status = sanitize_text_field($_POST['status']);
         update_user_meta($user_id, 'membership_status', $status);
@@ -213,7 +216,7 @@ class Board_Admin {
 
     public function handle_delete_user() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
 
         $user_id = intval($_POST['user_id']);
         if ($user_id == get_current_user_id()) wp_send_json_error(array('message' => __('Cannot delete yourself.', 'board')));
@@ -228,6 +231,7 @@ class Board_Admin {
     }
 
     public function handle_export_users() {
+        check_admin_referer('board_export_users');
         if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
 
         header('Content-Type: text/csv; charset=utf-8');
@@ -328,8 +332,9 @@ class Board_Admin {
 
         if (!$user_id) wp_send_json_error();
 
-        $user = new WP_User($user_id);
-        $user->set_role('certified_member');
+        $user = get_userdata($user_id);
+        $u = new WP_User($user_id);
+        $u->set_role('certified_member');
 
         $country = get_post_meta($request_id, 'country', true);
         $specialty = get_post_meta($request_id, 'specialty', true);
@@ -349,7 +354,9 @@ class Board_Admin {
             'meta_input' => array(
                 'user_id' => $user_id,
                 'cert_type' => __('Membership', 'board'),
-                'serial_number' => $verify_code
+                'serial_number' => $verify_code,
+                'cert_status' => 'active',
+                'issue_date' => current_time('mysql')
             )
         ));
 
@@ -365,28 +372,52 @@ class Board_Admin {
 
     public function handle_save_general_settings() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
 
         update_option('board_org_name', sanitize_text_field($_POST['org_name']));
         update_option('board_date_format', sanitize_text_field($_POST['date_format']));
         update_option('board_default_role', sanitize_text_field($_POST['default_role']));
         update_option('board_contact_email', sanitize_email($_POST['contact_email']));
         update_option('board_notify_email', sanitize_email($_POST['notify_email']));
+        update_option('board_timezone', sanitize_text_field($_POST['timezone']));
 
         Board::log(__('Settings Updated', 'board'), __('General settings were updated.', 'board'), get_current_user_id());
         wp_send_json_success(array('message' => __('General settings saved.', 'board')));
     }
 
+    public function handle_save_design_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
+
+        if (!empty($_FILES['board_logo']['name'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            $attachment_id = media_handle_upload('board_logo', 0);
+            if (!is_wp_error($attachment_id)) {
+                update_option('board_logo_url', wp_get_attachment_url($attachment_id));
+            }
+        }
+
+        update_option('board_primary_color', sanitize_hex_color($_POST['primary_color']));
+        update_option('board_font_family', sanitize_text_field($_POST['font_family']));
+        update_option('board_custom_css', wp_strip_all_tags($_POST['custom_css']));
+
+        Board::log(__('Design Updated', 'board'), __('Design and branding settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('Design settings saved.', 'board')));
+    }
+
     public function handle_save_advanced_settings() {
         check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
+        if (!Board_Roles::can_access_cp()) wp_send_json_error();
         update_option('board_debug_mode', sanitize_text_field($_POST['debug_mode']));
         Board::log(__('Settings Updated', 'board'), __('Advanced settings were updated.', 'board'), get_current_user_id());
         wp_send_json_success(array('message' => __('Advanced settings saved.', 'board')));
     }
 
     public function handle_restore_backup() {
-        if (!current_user_can('manage_options')) wp_die(__('Unauthorized', 'board'));
+        check_admin_referer('board_restore_nonce');
+        if (!Board_Roles::can_access_cp()) wp_die(__('Unauthorized', 'board'));
         if (!empty($_FILES['backup_file']['tmp_name'])) {
             $data = json_decode(file_get_contents($_FILES['backup_file']['tmp_name']), true);
             if ($data && isset($data['settings'])) {
@@ -420,26 +451,6 @@ class Board_Admin {
         wp_send_json_success($data);
     }
 
-    public function handle_save_design_settings() {
-        check_ajax_referer('board_nonce', 'nonce');
-        if (!current_user_can('manage_options')) wp_send_json_error();
-
-        if (!empty($_FILES['board_logo']['name'])) {
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            require_once(ABSPATH . 'wp-admin/includes/media.php');
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
-            $attachment_id = media_handle_upload('board_logo', 0);
-            if (!is_wp_error($attachment_id)) {
-                update_option('board_logo_url', wp_get_attachment_url($attachment_id));
-            }
-        }
-
-        update_option('board_primary_color', sanitize_hex_color($_POST['primary_color']));
-        update_option('board_custom_css', wp_strip_all_tags($_POST['custom_css']));
-
-        Board::log(__('Design Updated', 'board'), __('Design and branding settings were updated.', 'board'), get_current_user_id());
-        wp_send_json_success(array('message' => __('Design settings saved.', 'board')));
-    }
 
     public static function get_pending_requests() {
         return get_posts(array(

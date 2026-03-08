@@ -36,6 +36,7 @@ class Board {
 
     private function init_hooks() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_assets'));
+        add_action('wp_head', array($this, 'inject_custom_css'), 100);
         add_action('template_redirect', array($this, 'enforce_page_access'));
 
         // Initialize components
@@ -86,6 +87,20 @@ class Board {
             wp_redirect(home_url('/registration'));
             exit;
         }
+    }
+
+    public function inject_custom_css() {
+        $custom_css = get_option('board_custom_css');
+        $primary_color = get_option('board_primary_color', '#000000');
+
+        echo '<style type="text/css">';
+        if ($custom_css) echo $custom_css;
+        if ($primary_color !== '#000000') {
+            echo ".board-btn-black { background-color: {$primary_color} !important; }";
+            echo ".board-cp-header, .board-cp-sidebar, .board-table th { background: {$primary_color} !important; }";
+            echo ".board-form-field input, .board-form-field select, .board-form-field textarea { border-color: {$primary_color} !important; }";
+        }
+        echo '</style>';
     }
 
     public function enqueue_assets() {

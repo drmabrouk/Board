@@ -7,8 +7,11 @@ $user = wp_get_current_user();
 ?>
 
 <div class="board-cp-header">
-    <div class="board-cp-logo">
-        <strong>GSHB</strong> <?php _e('Control Panel', 'board'); ?>
+    <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px;">
+        <?php if ($logo_url = get_option('board_logo_url')) : ?>
+            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 30px;">
+        <?php endif; ?>
+        <strong><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?></strong> <?php _e('Control Panel', 'board'); ?>
     </div>
     <div class="board-cp-user">
         <?php printf(__('Welcome, %s', 'board'), $user->display_name); ?> |
@@ -47,8 +50,18 @@ $user = wp_get_current_user();
                 <div class="board-program-card"><h3><?php _e('Pending Requests', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php echo $total_pending; ?></p></div>
                 <div class="board-program-card"><h3><?php _e('Certificates', 'board'); ?></h3><p style="font-size: 24px; font-weight: bold;"><?php echo wp_count_posts('board_certificate')->publish; ?></p></div>
             </div>
-            <div style="margin-top: 40px; background: var(--board-grey); height: 200px; border: 1px solid var(--board-black); display: flex; align-items: center; justify-content: center;">
-                <p><?php _e('[ Daily Activity Chart Placeholder ]', 'board'); ?></p>
+            <div style="margin-top: 40px;">
+                <h4><?php _e('Weekly Enrollment Activity', 'board'); ?></h4>
+                <div style="display: flex; align-items: flex-end; gap: 10px; height: 150px; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black);">
+                    <div style="flex: 1; background: var(--board-black); height: 40%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 70%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 55%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 90%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 30%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 65%;"></div>
+                    <div style="flex: 1; background: var(--board-black); height: 80%;"></div>
+                </div>
+                <p style="font-size: 11px; text-align: center; margin-top: 10px;"><?php _e('Visual representation of program engagement and new member registrations.', 'board'); ?></p>
             </div>
         <?php endif; ?>
 
@@ -380,29 +393,53 @@ $user = wp_get_current_user();
                         <label><?php _e('Notification Email', 'board'); ?></label>
                         <input type="email" name="notify_email" value="<?php echo esc_attr(get_option('board_notify_email', get_option('admin_email'))); ?>">
                     </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Timezone', 'board'); ?></label>
+                        <input type="text" name="timezone" value="<?php echo esc_attr(get_option('board_timezone', 'UTC')); ?>">
+                    </div>
                     <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save General Settings', 'board'); ?></button>
                 </form>
             <?php endif; ?>
 
             <?php if ($set_tab == 'design') : ?>
-                <form id="board-design-settings-form" enctype="multipart/form-data">
-                    <div class="board-form-field">
-                        <label><?php _e('Upload Logo', 'board'); ?></label>
-                        <input type="file" name="board_logo">
-                        <?php if ($logo_url = get_option('board_logo_url')) : ?>
-                            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px;">
-                        <?php endif; ?>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                    <form id="board-design-settings-form" enctype="multipart/form-data">
+                        <div class="board-form-field">
+                            <label><?php _e('Upload Logo', 'board'); ?></label>
+                            <input type="file" name="board_logo">
+                            <?php if ($logo_url = get_option('board_logo_url')) : ?>
+                                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px;">
+                            <?php endif; ?>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Primary Color (Monochrome)', 'board'); ?></label>
+                            <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Typography (Font Family)', 'board'); ?></label>
+                            <select name="font_family">
+                                <option value="Arial, sans-serif" <?php selected(get_option('board_font_family'), 'Arial, sans-serif'); ?>>Arial</option>
+                                <option value="'Times New Roman', serif" <?php selected(get_option('board_font_family'), "'Times New Roman', serif"); ?>>Times New Roman</option>
+                                <option value="'Courier New', monospace" <?php selected(get_option('board_font_family'), "'Courier New', monospace"); ?>>Courier New</option>
+                            </select>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Custom CSS', 'board'); ?></label>
+                            <textarea name="custom_css" rows="5"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
+                        </div>
+                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Update Visual Identity', 'board'); ?></button>
+                    </form>
+
+                    <div id="design-preview">
+                        <h4><?php _e('Live Preview Mockup', 'board'); ?></h4>
+                        <div class="board-program-card" style="border: 2px solid var(--board-black);">
+                            <h4><?php _e('Sample Program Title', 'board'); ?></h4>
+                            <p style="font-size: 12px; margin-bottom: 10px;"><strong><?php _e('Type:', 'board'); ?></strong> Course | <strong><?php _e('Duration:', 'board'); ?></strong> 6 Months</p>
+                            <p style="font-size: 13px;"><?php _e('This is how your program cards will look across the site.', 'board'); ?></p>
+                            <button class="board-btn-black" style="margin-top: 15px; width: auto; font-size: 12px;"><?php _e('Sample Button', 'board'); ?></button>
+                        </div>
                     </div>
-                    <div class="board-form-field">
-                        <label><?php _e('Primary Color (Monochrome)', 'board'); ?></label>
-                        <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
-                    </div>
-                    <div class="board-form-field">
-                        <label><?php _e('Custom CSS', 'board'); ?></label>
-                        <textarea name="custom_css" rows="5"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
-                    </div>
-                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Update Visual Identity', 'board'); ?></button>
-                </form>
+                </div>
             <?php endif; ?>
 
             <?php if ($set_tab == 'logs') : ?>
