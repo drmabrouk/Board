@@ -6,6 +6,9 @@ if (!defined('ABSPATH')) {
 
 <div class="board-container">
     <div class="board-auth-box">
+        <?php if ($logo_url = get_option('board_logo_url')) : ?>
+            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 60px; margin-bottom: 20px;">
+        <?php endif; ?>
 
         <!-- Login Form -->
         <div id="board-login-view" class="board-auth-view">

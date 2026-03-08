@@ -36,7 +36,7 @@ get_header();
                 </div>
             </div>
             <div style="text-align: right;">
-                <strong>GSHB</strong><br><?php _e('Global Sports Health Board', 'board'); ?>
+                <strong><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?></strong><br><?php _e('Global Sports Health Board', 'board'); ?>
             </div>
         </div>
 

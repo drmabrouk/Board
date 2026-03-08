@@ -6,7 +6,10 @@ if (!defined('ABSPATH')) {
 
 <div class="board-container">
     <div style="text-align: center; margin-bottom: 50px;">
-        <h1><?php _e('Global Sports Health Board (GSHB)', 'board'); ?></h1>
+        <?php if ($logo_url = get_option('board_logo_url')) : ?>
+            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 80px; margin-bottom: 20px;">
+        <?php endif; ?>
+        <h1><?php echo esc_html(get_option('board_org_name', 'Global Sports Health Board (GSHB)')); ?></h1>
         <p><?php _e('Professional Management System', 'board'); ?></p>
     </div>
 

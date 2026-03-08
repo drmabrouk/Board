@@ -70,11 +70,12 @@ $user = wp_get_current_user();
                 <h3><?php _e('Users Management', 'board'); ?></h3>
                 <div style="display: flex; gap: 10px;">
                     <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: flex; gap: 5px; align-items: center;">
+                        <?php wp_nonce_field('board_import_nonce'); ?>
                         <input type="hidden" name="action" value="board_import_users">
                         <input type="file" name="import_file" style="font-size: 11px;" required>
                         <button type="submit" class="board-btn-black" style="width: auto; padding: 5px 10px; font-size: 11px;"><?php _e('Import CSV', 'board'); ?></button>
                     </form>
-                    <a href="<?php echo admin_url('admin-post.php?action=board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export CSV', 'board'); ?></a>
+                    <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_users'), 'board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px; margin-right: 10px;"><?php _e('Export CSV', 'board'); ?></a>
                     <button class="board-btn-black" id="open-add-user" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add New User', 'board'); ?></button>
                 </div>
             </div>
@@ -162,7 +163,7 @@ $user = wp_get_current_user();
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Manage Programs', 'board'); ?></h3>
                 <div style="display: flex; gap: 10px;">
-                    <a href="<?php echo admin_url('admin-post.php?action=board_export_programs'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Programs', 'board'); ?></a>
+                    <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_programs'), 'board_export_programs'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Programs', 'board'); ?></a>
                     <button class="board-btn-black" id="open-add-program" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add New Program', 'board'); ?></button>
                 </div>
             </div>
@@ -294,7 +295,7 @@ $user = wp_get_current_user();
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Certificates Management', 'board'); ?></h3>
                 <div style="display: flex; gap: 10px;">
-                    <a href="<?php echo admin_url('admin-post.php?action=board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Certificates', 'board'); ?></a>
+                    <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_certificates'), 'board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 5px 15px; font-size: 12px;"><?php _e('Export Certificates', 'board'); ?></a>
                     <button class="board-btn-black" id="open-generate-cert" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('New Certificate', 'board'); ?></button>
                 </div>
             </div>
@@ -428,8 +429,8 @@ $user = wp_get_current_user();
                 <h4><?php _e('Data Export', 'board'); ?></h4>
                 <p style="font-size: 14px; margin-bottom: 15px;"><?php _e('Download comprehensive system data for auditing and performance tracking.', 'board'); ?></p>
                 <div style="display: flex; gap: 10px;">
-                    <a href="<?php echo admin_url('admin-post.php?action=board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px;"><?php _e('Users Report', 'board'); ?></a>
-                    <a href="<?php echo admin_url('admin-post.php?action=board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px; background: grey;"><?php _e('Certificates Report', 'board'); ?></a>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_users'), 'board_export_users'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px;"><?php _e('Users Report', 'board'); ?></a>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=board_export_certificates'), 'board_export_certificates'); ?>" class="board-btn-black" style="width: auto; text-decoration: none; padding: 10px 20px; background: grey;"><?php _e('Certificates Report', 'board'); ?></a>
                 </div>
             </div>
         <?php endif; ?>
@@ -564,6 +565,7 @@ $user = wp_get_current_user();
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="board-btn-black" id="board-full-backup-json" style="width: auto;"><?php _e('Full Backup (JSON)', 'board'); ?></button>
                     <form action="<?php echo admin_url('admin-post.php'); ?>" method="post" enctype="multipart/form-data" style="display: inline-flex; gap: 10px;">
+                        <?php wp_nonce_field('board_restore_nonce'); ?>
                         <input type="hidden" name="action" value="board_restore_backup">
                         <input type="file" name="backup_file" required style="font-size: 11px;">
                         <button type="submit" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Restore Data', 'board'); ?></button>
@@ -595,6 +597,11 @@ $user = wp_get_current_user();
 
 <script>
 jQuery(document).ready(function($) {
+    // Flash Messages for redirects
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('import') === 'success') alert('<?php _e('Users imported successfully.', 'board'); ?>');
+    if (urlParams.get('restore') === 'success') alert('<?php _e('Data restored successfully.', 'board'); ?>');
+
     $('#verify-mgmt-search').on('keyup', function() {
         var val = $(this).val().toLowerCase();
         $('#verify-mgmt-table tbody tr').filter(function() {

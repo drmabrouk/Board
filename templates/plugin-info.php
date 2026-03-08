@@ -6,8 +6,11 @@ if (!defined('ABSPATH')) {
 
 <div class="board-container">
     <div style="text-align: center; margin-bottom: 50px;">
-        <h1><?php _e('GSHB Board Plugin Information', 'board'); ?></h1>
-        <p><?php _e('Professional Management System for Global Sports Health Board', 'board'); ?></p>
+        <?php if ($logo_url = get_option('board_logo_url')) : ?>
+            <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 80px; margin-bottom: 20px;">
+        <?php endif; ?>
+        <h1><?php echo esc_html(get_option('board_org_name', 'GSHB')); ?> <?php _e('Board Plugin Information', 'board'); ?></h1>
+        <p><?php _e('Professional Management System', 'board'); ?></p>
     </div>
 
     <div class="board-auth-box" style="max-width: 900px; text-align: left;">
