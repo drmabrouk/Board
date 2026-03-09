@@ -20,10 +20,12 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
 
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function delete_program($id) {
@@ -47,9 +49,11 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function delete_exam($id) {
@@ -70,7 +74,8 @@ class Manager {
     public static function save_certificate($data) {
         global $wpdb;
         $table = $wpdb->prefix . 'board_certificates';
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function update_certificate_status($id, $status) {
@@ -100,9 +105,11 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function get_membership_by_id($id) {
@@ -123,9 +130,11 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function get_applications($user_id = null, $program_id = null) {
@@ -149,9 +158,11 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function get_fellowships($user_id = null) {
@@ -175,9 +186,11 @@ class Manager {
         if (isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
-            return $wpdb->update($table, $data, array('id' => $id));
+            $wpdb->update($table, $data, array('id' => $id));
+            return $id;
         }
-        return $wpdb->insert($table, $data);
+        $wpdb->insert($table, $data);
+        return $wpdb->insert_id;
     }
 
     public static function get_questions($category = null) {

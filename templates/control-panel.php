@@ -261,7 +261,10 @@ $user = wp_get_current_user();
         <?php if ($tab == 'qbank') : ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Professional Question Bank', 'board'); ?></h3>
-                <button class="board-btn-black" id="open-add-question" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add Question', 'board'); ?></button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="question-search" placeholder="<?php _e('Search questions...', 'board'); ?>" style="padding: 8px; border: 1px solid var(--board-black);">
+                    <button class="board-btn-black" id="open-add-question" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add Question', 'board'); ?></button>
+                </div>
             </div>
 
             <!-- Add Question Form -->
@@ -304,7 +307,7 @@ $user = wp_get_current_user();
                 </form>
             </div>
 
-            <table class="board-table">
+            <table class="board-table" id="admin-questions-table">
                 <thead><tr><th><?php _e('Category / specialization', 'board'); ?></th><th><?php _e('Type', 'board'); ?></th><th><?php _e('Question', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
                 <tbody>
                     <?php
@@ -314,7 +317,19 @@ $user = wp_get_current_user();
                             <td><strong><?php echo esc_html($q->category); ?></strong><br><small><?php echo esc_html($q->specialization); ?></small></td>
                             <td><?php echo $q->type; ?></td>
                             <td><?php echo wp_trim_words($q->question_text, 15); ?></td>
-                            <td><button class="board-btn-black board-btn-small"><?php _e('Edit', 'board'); ?></button></td>
+                            <td>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="board-btn-black board-btn-small edit-question"
+                                        data-id="<?php echo $q->id; ?>"
+                                        data-cat="<?php echo esc_attr($q->category); ?>"
+                                        data-spec="<?php echo esc_attr($q->specialization); ?>"
+                                        data-type="<?php echo esc_attr($q->type); ?>"
+                                        data-text="<?php echo esc_attr($q->question_text); ?>"
+                                        data-options="<?php echo esc_attr(implode("\n", json_decode($q->options, true) ?: array())); ?>"
+                                        data-correct="<?php echo esc_attr($q->correct_answer); ?>"><?php _e('Edit', 'board'); ?></button>
+                                    <button class="board-btn-black board-btn-small board-btn-destructive delete-question" data-id="<?php echo $q->id; ?>"><?php _e('Delete', 'board'); ?></button>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -512,7 +527,17 @@ $user = wp_get_current_user();
                                 <strong><?php _e('Credits:', 'board'); ?></strong> <?php echo intval($p->credits); ?>
                             </p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small edit-program"
+                                    data-id="<?php echo $p->id; ?>"
+                                    data-title="<?php echo esc_attr($p->title); ?>"
+                                    data-code="<?php echo esc_attr($p->code); ?>"
+                                    data-type="<?php echo esc_attr($p->type); ?>"
+                                    data-category="<?php echo esc_attr($p->category); ?>"
+                                    data-instructor="<?php echo esc_attr($p->instructor); ?>"
+                                    data-credits="<?php echo esc_attr($p->credits); ?>"
+                                    data-duration="<?php echo esc_attr($p->duration); ?>"
+                                    data-desc="<?php echo esc_attr($p->description); ?>"
+                                    data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
                                     <button class="board-btn-black board-btn-small board-btn-destructive delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
@@ -643,7 +668,15 @@ $user = wp_get_current_user();
                                 <strong><?php _e('Deadline:', 'board'); ?></strong> <?php echo $e->due_date ?: __('No Deadline', 'board'); ?>
                             </div>
                             <div style="margin-top: auto; display: flex; gap: 8px; border-top: 1px solid #eee; pt-15;">
-                                <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Edit exam settings', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small edit-exam"
+                                    data-id="<?php echo $e->id; ?>"
+                                    data-title="<?php echo esc_attr($e->title); ?>"
+                                    data-code="<?php echo esc_attr($e->code); ?>"
+                                    data-pid="<?php echo esc_attr($e->program_id); ?>"
+                                    data-due="<?php echo esc_attr($e->due_date); ?>"
+                                    data-passing="<?php echo esc_attr($e->passing_percentage); ?>"
+                                    data-timer="<?php echo esc_attr($e->time_limit); ?>"
+                                    data-tooltip="<?php _e('Edit exam settings', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
                                 <button class="board-btn-black board-btn-small board-btn-destructive delete-exam" data-id="<?php echo $e->id; ?>" data-tooltip="<?php _e('Permanently remove exam', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
                             </div>
                         </div>
@@ -1243,16 +1276,105 @@ $user = wp_get_current_user();
 jQuery(document).ready(function($) {
     $('#open-add-user').on('click', function() { $('#add-user-section').slideDown(); });
     $('#close-add-user').on('click', function() { $('#add-user-section').slideUp(); });
-    $('#open-add-program').on('click', function() { $('#add-program-section').slideDown(); });
-    $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
+
     $('#open-add-membership').on('click', function() { $('#add-membership-section').slideDown(); });
     $('#close-add-membership').on('click', function() { $('#add-membership-section').slideUp(); });
-    $('#open-add-exam').on('click', function() { $('#add-exam-section').slideDown(); });
-    $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
-    $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
+
+    $('#open-generate-cert').on('click', function() {
+        $('#generate-cert-section').slideDown();
+        $('#board-generate-cert-form')[0].reset();
+        $('#board-generate-cert-form').find('input[name="user_id"]').val('');
+        $('html, body').animate({ scrollTop: $('#generate-cert-section').offset().top - 100 }, 500);
+    });
     $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
-    $('#open-add-question').on('click', function() { $('#add-question-section').slideDown(); });
-    $('#close-add-question').on('click', function() { $('#add-question-section').slideUp(); });
+
+    $('#open-add-program').on('click', function() {
+        $('#add-program-section').slideDown();
+        $('#board-save-program-form')[0].reset();
+        $('#board-save-program-form').find('input[name="program_id"]').remove();
+        $('#board-save-program-form').find('input[name="code"]').val('');
+        $('html, body').animate({ scrollTop: $('#add-program-section').offset().top - 100 }, 500);
+    });
+    $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
+
+    $('#open-add-exam').on('click', function() {
+        $('#add-exam-section').slideDown();
+        $('#board-save-exam-form')[0].reset();
+        $('#board-save-exam-form').find('input[name="exam_id"]').remove();
+        $('html, body').animate({ scrollTop: $('#add-exam-section').offset().top - 100 }, 500);
+    });
+    $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
+    $('#open-add-question').on('click', function() {
+        $('#add-question-section').slideDown();
+        $('html, body').animate({ scrollTop: $('#add-question-section').offset().top - 100 }, 500);
+    });
+    $('#close-add-question').on('click', function() {
+        $('#add-question-section').slideUp();
+        $('#board-save-question-form')[0].reset();
+        $('#board-save-question-form').find('input[name="question_id"]').remove();
+    });
+
+    $(document).on('click', '.edit-program', function() {
+        var d = $(this).data();
+        var f = $('#board-save-program-form');
+        f.find('input[name="title"]').val(d.title);
+        f.find('select[name="type"]').val(d.type);
+        f.find('input[name="category"]').val(d.category);
+        f.find('input[name="instructor"]').val(d.instructor);
+        f.find('input[name="credits"]').val(d.credits);
+        f.find('input[name="duration"]').val(d.duration);
+        f.find('input[name="code"]').val(d.code);
+        f.find('textarea[name="desc"]').val(d.desc);
+
+        if (!f.find('input[name="program_id"]').length) {
+            f.append('<input type="hidden" name="program_id" value="' + d.id + '">');
+        } else {
+            f.find('input[name="program_id"]').val(d.id);
+        }
+
+        $('#add-program-section').slideDown();
+        $('html, body').animate({ scrollTop: $('#add-program-section').offset().top - 100 }, 500);
+    });
+
+    $(document).on('click', '.edit-exam', function() {
+        var d = $(this).data();
+        var f = $('#board-save-exam-form');
+        f.find('input[name="title"]').val(d.title);
+        f.find('input[name="exam_code"]').val(d.code);
+        f.find('select[name="program_id"]').val(d.pid);
+        f.find('input[name="exam_due"]').val(d.due);
+        f.find('input[name="passing_percentage"]').val(d.passing);
+        f.find('input[name="time_limit"]').val(d.timer);
+
+        if (!f.find('input[name="exam_id"]').length) {
+            f.append('<input type="hidden" name="exam_id" value="' + d.id + '">');
+        } else {
+            f.find('input[name="exam_id"]').val(d.id);
+        }
+
+        $('#add-exam-section').slideDown();
+        $('html, body').animate({ scrollTop: $('#add-exam-section').offset().top - 100 }, 500);
+    });
+
+    $(document).on('click', '.edit-question', function() {
+        var d = $(this).data();
+        var f = $('#board-save-question-form');
+        f.find('input[name="category"]').val(d.cat);
+        f.find('input[name="specialization"]').val(d.spec);
+        f.find('select[name="type"]').val(d.type);
+        f.find('textarea[name="question_text"]').val(d.text);
+        f.find('textarea[name="options[]"]').val(d.options);
+        f.find('input[name="correct_answer"]').val(d.correct);
+
+        if (!f.find('input[name="question_id"]').length) {
+            f.append('<input type="hidden" name="question_id" value="' + d.id + '">');
+        } else {
+            f.find('input[name="question_id"]').val(d.id);
+        }
+
+        $('#add-question-section').slideDown();
+        $('html, body').animate({ scrollTop: $('#add-question-section').offset().top - 100 }, 500);
+    });
 
     $(document).on('click', '.open-link-cert, .open-link-membership', function() {
         var id = $(this).data('id');
