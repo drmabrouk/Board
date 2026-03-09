@@ -34,6 +34,7 @@ class Manager {
         add_action('wp_ajax_board_submit_program_application', array($this, 'handle_submit_application'));
         add_action('wp_ajax_board_update_application_status', array($this, 'handle_update_application_status'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
+        add_action('wp_ajax_board_delete_exam', array($this, 'handle_delete_exam'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
         add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
@@ -85,6 +86,18 @@ class Manager {
         if (DB::delete_certificate($id)) {
             Plugin::log(__('Certificate Deleted', 'board'), sprintf(__('Certificate ID %d deleted.', 'board'), $id), get_current_user_id());
             wp_send_json_success(array('message' => __('Record deleted.', 'board')));
+        } else {
+            wp_send_json_error();
+        }
+    }
+
+    public function handle_delete_exam() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['exam_id']);
+        if (DB::delete_exam($id)) {
+            Plugin::log(__('Exam Deleted', 'board'), sprintf(__('Exam ID %d deleted.', 'board'), $id), get_current_user_id());
+            wp_send_json_success(array('message' => __('Exam deleted.', 'board')));
         } else {
             wp_send_json_error();
         }

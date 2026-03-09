@@ -44,7 +44,18 @@ class Manager {
     public static function save_exam($data) {
         global $wpdb;
         $table = $wpdb->prefix . 'board_exams';
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
+        }
         return $wpdb->insert($table, $data);
+    }
+
+    public static function delete_exam($id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_exams';
+        return $wpdb->delete($table, array('id' => $id));
     }
 
     public static function get_certificates($user_id = null) {

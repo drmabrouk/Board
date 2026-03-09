@@ -15,6 +15,8 @@ class Handler {
         add_action('wp_ajax_nopriv_board_register', array($this, 'handle_register'));
         add_action('wp_ajax_nopriv_board_reset', array($this, 'handle_reset'));
         add_action('wp_ajax_nopriv_board_send_reg_otp', array($this, 'handle_send_reg_otp'));
+        add_action('wp_ajax_nopriv_board_verify_otp', array($this, 'handle_verify_otp'));
+        add_action('wp_ajax_nopriv_board_reset_password_final', array($this, 'handle_reset_password_final'));
 
         // Also allow logged in users (though they shouldn't see it)
         add_action('wp_ajax_board_login', array($this, 'handle_login'));
@@ -238,26 +240,21 @@ class Handler {
             ));
         }
 
-        // 2. Check Certificate Serial Numbers
-        $certs = get_posts(array(
-            'post_type' => 'board_certificate',
-            'meta_key' => 'serial_number',
-            'meta_value' => $code,
-            'posts_per_page' => 1
-        ));
+        // 2. Check Certificate Serial Numbers using Custom DB table
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_certificates';
+        $cert = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE serial_number = %s", $code));
 
-        if (!empty($certs)) {
-            $cert = $certs[0];
-            $uid = get_post_meta($cert->ID, 'user_id', true);
-            $user = get_userdata($uid);
-            $status = get_post_meta($cert->ID, 'cert_status', true);
+        if ($cert) {
+            $uid = $cert->user_id;
+            $user = $uid ? get_userdata($uid) : null;
 
             wp_send_json_success(array(
                 'valid' => true,
-                'is_active' => ($status === 'active'),
-                'name' => $user ? $user->display_name : 'Unknown',
-                'type' => get_post_meta($cert->ID, 'cert_type', true),
-                'specialty' => get_user_meta($uid, 'specialty', true) ?: 'N/A',
+                'is_active' => ($cert->status === 'active'),
+                'name' => $user ? $user->display_name : ($cert->title ?: 'N/A'),
+                'type' => $cert->type,
+                'specialty' => $uid ? (get_user_meta($uid, 'specialty', true) ?: 'N/A') : 'N/A',
                 'expiry' => __('N/A', 'board'),
                 'url' => home_url("/certificate/{$code}")
             ));
