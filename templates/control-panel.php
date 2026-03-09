@@ -34,6 +34,7 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs" data-tooltip="<?php _e('Course Catalog', 'board'); ?>"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'applications') ? 'active' : ''; ?>"><a href="?cp_tab=applications" data-tooltip="<?php _e('Program Enrollments', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Applications', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
@@ -162,7 +163,10 @@ $user = wp_get_current_user();
                             <select name="role" required>
                                 <option value="board_member"><?php _e('Member', 'board'); ?></option>
                                 <option value="certified_member"><?php _e('Certified Member', 'board'); ?></option>
+                                <option value="programs_manager"><?php _e('Programs Manager', 'board'); ?></option>
+                                <option value="certs_manager"><?php _e('Certifications Manager', 'board'); ?></option>
                                 <option value="academic_supervisor"><?php _e('Academic Supervisor', 'board'); ?></option>
+                                <option value="board_admin"><?php _e('Board Administrator', 'board'); ?></option>
                             </select>
                         </div>
                     </div>
@@ -173,19 +177,31 @@ $user = wp_get_current_user();
                 </form>
             </div>
 
-            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1; position: relative;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Users', 'board'); ?></label>
+            <div style="margin-bottom: 30px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: flex-end;">
+                <div style="position: relative;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Users', 'board'); ?></label>
                     <input type="text" id="user-search" placeholder="<?php _e('Search by name, ID or email...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
                     <div id="user-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Role', 'board'); ?></label>
-                    <select id="role-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Role Filter', 'board'); ?></label>
+                    <select id="role-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
                         <option value=""><?php _e('All Roles', 'board'); ?></option>
                         <option value="board_member"><?php _e('Member', 'board'); ?></option>
                         <option value="certified_member"><?php _e('Certified', 'board'); ?></option>
+                        <option value="programs_manager"><?php _e('Programs Manager', 'board'); ?></option>
+                        <option value="certs_manager"><?php _e('Certs Manager', 'board'); ?></option>
                         <option value="academic_supervisor"><?php _e('Supervisor', 'board'); ?></option>
+                        <option value="board_admin"><?php _e('Board Admin', 'board'); ?></option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Status Filter', 'board'); ?></label>
+                    <select id="status-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                        <option value=""><?php _e('All Statuses', 'board'); ?></option>
+                        <option value="active"><?php _e('Active', 'board'); ?></option>
+                        <option value="inactive"><?php _e('Inactive', 'board'); ?></option>
+                        <option value="suspended"><?php _e('Suspended', 'board'); ?></option>
                     </select>
                 </div>
             </div>
@@ -194,7 +210,7 @@ $user = wp_get_current_user();
                 <thead>
                     <tr>
                         <th><?php _e('Name / ID', 'board'); ?></th>
-                        <th><?php _e('Email', 'board'); ?></th>
+                        <th><?php _e('Email / Date', 'board'); ?></th>
                         <th><?php _e('Role', 'board'); ?></th>
                         <th><?php _e('Status', 'board'); ?></th>
                         <th><?php _e('Certs / Exams', 'board'); ?></th>
@@ -210,14 +226,17 @@ $user = wp_get_current_user();
                         $certs_count = count(DB::get_certificates($u->ID));
                         $exams_count = count(get_user_meta($u->ID, 'assigned_exams', true) ?: array());
                         ?>
-                        <tr data-role="<?php echo implode(' ', $u->roles); ?>">
+                        <tr data-role="<?php echo implode(' ', $u->roles); ?>" data-status="<?php echo $status; ?>">
                             <td><strong><?php echo esc_html($u->display_name); ?></strong><br><small><?php echo $id_code; ?></small></td>
-                            <td><?php echo esc_html($u->user_email); ?></td>
+                            <td><?php echo esc_html($u->user_email); ?><br><small><?php echo date('Y-m-d', strtotime($u->user_registered)); ?></small></td>
                             <td>
                                 <select class="quick-role-change" data-id="<?php echo $u->ID; ?>" style="padding: 2px; font-size: 11px;">
                                     <option value="board_member" <?php selected(in_array('board_member', $u->roles)); ?>><?php _e('Member', 'board'); ?></option>
                                     <option value="certified_member" <?php selected(in_array('certified_member', $u->roles)); ?>><?php _e('Certified', 'board'); ?></option>
+                                    <option value="programs_manager" <?php selected(in_array('programs_manager', $u->roles)); ?>><?php _e('Programs', 'board'); ?></option>
+                                    <option value="certs_manager" <?php selected(in_array('certs_manager', $u->roles)); ?>><?php _e('Certs', 'board'); ?></option>
                                     <option value="academic_supervisor" <?php selected(in_array('academic_supervisor', $u->roles)); ?>><?php _e('Supervisor', 'board'); ?></option>
+                                    <option value="board_admin" <?php selected(in_array('board_admin', $u->roles)); ?>><?php _e('Admin', 'board'); ?></option>
                                 </select>
                             </td>
                             <td>
@@ -227,7 +246,7 @@ $user = wp_get_current_user();
                                     <option value="suspended" <?php selected($status, 'suspended'); ?>><?php _e('Suspended', 'board'); ?></option>
                                 </select>
                             </td>
-                            <td><?php echo $certs_count; ?> / <?php echo $exams_count; ?></td>
+                            <td><strong><?php echo $certs_count; ?></strong> / <?php echo $exams_count; ?></td>
                             <td>
                                 <div style="display: flex; gap: 5px;">
                                     <button class="board-btn-black board-btn-small board-btn-destructive delete-user" data-id="<?php echo $u->ID; ?>" data-tooltip="<?php _e('Permanently remove this user', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
@@ -255,55 +274,79 @@ $user = wp_get_current_user();
             </div>
 
             <!-- Add Program Form -->
-            <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
-                <h4><?php _e('Create Program', 'board'); ?></h4>
+            <div id="add-program-section" style="display: none; background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black); margin-bottom: 30px; border-radius: 8px;">
+                <h4><?php _e('Create Professional Program', 'board'); ?></h4>
                 <form id="board-save-program-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="board-form-field">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div class="board-form-field" style="grid-column: span 2;">
                             <label><?php _e('Program Title', 'board'); ?></label>
                             <input type="text" name="title" placeholder="e.g., Advanced Sports Nutrition" required>
                         </div>
                         <div class="board-form-field">
-                            <label><?php _e('Program Code', 'board'); ?></label>
-                            <input type="text" name="code" placeholder="e.g., ASN-2024" required>
-                        </div>
-                        <div class="board-form-field">
-                            <label><?php _e('Type', 'board'); ?></label>
+                            <label><?php _e('Program Type', 'board'); ?></label>
                             <select name="type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
                                 <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                                <option value="Accreditation"><?php _e('Accreditation', 'board'); ?></option>
                             </select>
                         </div>
                         <div class="board-form-field">
-                            <label><?php _e('Duration', 'board'); ?></label>
+                            <label><?php _e('Category / Field', 'board'); ?></label>
+                            <input type="text" name="category" placeholder="e.g., Medicine">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Lead Instructor', 'board'); ?></label>
+                            <input type="text" name="instructor" placeholder="e.g., Dr. Smith">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Academic Credits', 'board'); ?></label>
+                            <input type="number" name="credits" value="0">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Program Duration', 'board'); ?></label>
                             <input type="text" name="duration" placeholder="e.g., 6 Months">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Auto-Code (GSHB-PROG-XXXX)', 'board'); ?></label>
+                            <input type="text" name="code" placeholder="Leave empty for auto-gen" readonly style="background: #eee;">
                         </div>
                     </div>
                     <div class="board-form-field">
-                        <label><?php _e('Description', 'board'); ?></label>
-                        <textarea name="desc" placeholder="Brief program overview..." rows="4"></textarea>
+                        <label><?php _e('Professional Description', 'board'); ?></label>
+                        <textarea name="desc" placeholder="Detailed program overview..." rows="5"></textarea>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Program', 'board'); ?></button>
-                        <button type="button" id="close-add-program" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Cancel', 'board'); ?></button>
+                    <div style="display: flex; gap: 15px;">
+                        <button type="submit" class="board-btn-black"><?php _e('Publish Program', 'board'); ?></button>
+                        <button type="button" id="close-add-program" class="board-btn-black board-btn-outline"><?php _e('Cancel', 'board'); ?></button>
                     </div>
                 </form>
             </div>
 
-            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1; position: relative;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
-                    <input type="text" id="program-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+            <div style="margin-bottom: 30px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; align-items: flex-end;">
+                <div style="position: relative;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
+                    <input type="text" id="program-search" placeholder="<?php _e('Search by title, code, instructor...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
                     <div id="program-search-suggestions" class="board-search-suggestions"></div>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Type', 'board'); ?></label>
-                    <select id="program-type-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Type Filter', 'board'); ?></label>
+                    <select id="program-type-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
                         <option value=""><?php _e('All Types', 'board'); ?></option>
-                        <option value="Course"><?php _e('Course', 'board'); ?></option>
-                        <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
-                        <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
+                        <option value="course"><?php _e('Course', 'board'); ?></option>
+                        <option value="diploma"><?php _e('Diploma', 'board'); ?></option>
+                        <option value="board membership"><?php _e('Board Membership', 'board'); ?></option>
+                        <option value="accreditation"><?php _e('Accreditation', 'board'); ?></option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Category Filter', 'board'); ?></label>
+                    <select id="program-category-filter" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);">
+                        <option value=""><?php _e('All Categories', 'board'); ?></option>
+                        <?php
+                        $cats = $wpdb->get_col("SELECT DISTINCT category FROM {$wpdb->prefix}board_programs WHERE category != ''");
+                        foreach($cats as $cat) echo '<option value="'.strtolower($cat).'">'.esc_html($cat).'</option>';
+                        ?>
                     </select>
                 </div>
             </div>
@@ -314,13 +357,20 @@ $user = wp_get_current_user();
                 if (!empty($progs)) :
                     foreach ($progs as $p) :
                         ?>
-                        <div class="board-program-card" data-title="<?php echo strtolower($p->title); ?>">
-                            <h4><?php echo esc_html($p->title); ?></h4>
-                            <p style="font-size: 12px; margin-bottom: 10px;">
+                        <div class="board-program-card" data-title="<?php echo strtolower($p->title); ?>" data-type="<?php echo strtolower($p->type); ?>" data-category="<?php echo strtolower($p->category); ?>">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h4 style="margin: 0;"><?php echo esc_html($p->title); ?></h4>
+                                <span class="status-badge" style="font-size: 9px; background: #f0f0f0;"><?php echo esc_html($p->code); ?></span>
+                            </div>
+                            <p style="font-size: 12px; margin-bottom: 10px; color: #666;">
                                 <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($p->type); ?> |
-                                <strong><?php _e('Code:', 'board'); ?></strong> <?php echo esc_html($p->code); ?>
+                                <strong><?php _e('Category:', 'board'); ?></strong> <?php echo esc_html($p->category ?: 'General'); ?>
                             </p>
-                            <p style="font-size: 13px;"><?php echo wp_trim_words($p->description, 15); ?></p>
+                            <p style="font-size: 13px; flex-grow: 1;"><?php echo wp_trim_words($p->description, 20); ?></p>
+                            <p style="font-size: 11px; margin-top: 10px; border-top: 1px solid #eee; pt-10;">
+                                <strong><?php _e('Instructor:', 'board'); ?></strong> <?php echo esc_html($p->instructor ?: 'N/A'); ?> |
+                                <strong><?php _e('Credits:', 'board'); ?></strong> <?php echo intval($p->credits); ?>
+                            </p>
                             <div style="margin-top: 15px; display: flex; gap: 10px;">
                                 <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Modify program details', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
                                     <button class="board-btn-black board-btn-small board-btn-destructive delete-program" data-id="<?php echo $p->id; ?>" data-tooltip="<?php _e('Remove this program', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
@@ -376,13 +426,14 @@ $user = wp_get_current_user();
             <hr>
             <h3><?php _e('Assign Exams to Users', 'board'); ?></h3>
             <form id="board-assign-exam-form" style="margin-bottom: 30px;">
-                <div class="board-form-field">
-                    <select name="user_id" required>
-                        <option value=""><?php _e('Select User', 'board'); ?></option>
-                        <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
-                    </select>
+                <div class="board-form-field" style="position: relative;">
+                    <label><?php _e('Select User Account', 'board'); ?></label>
+                    <input type="text" class="board-user-lookup-input" placeholder="<?php _e('Search by name or email...', 'board'); ?>" autocomplete="off" required>
+                    <input type="hidden" name="user_id" value="">
+                    <div class="board-user-lookup-results board-search-suggestions"></div>
                 </div>
                 <div class="board-form-field">
+                    <label><?php _e('Target Exam', 'board'); ?></label>
                     <select name="exam_id" required>
                         <option value=""><?php _e('Select Exam', 'board'); ?></option>
                         <?php
@@ -396,7 +447,40 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'requests') : ?>
-            <h3><?php _e('Membership Requests & Members', 'board'); ?></h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Membership Requests & Members', 'board'); ?></h3>
+                <button class="board-btn-black" id="open-add-membership" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add Manual Record', 'board'); ?></button>
+            </div>
+
+            <!-- Manual Membership Form -->
+            <div id="add-membership-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 20px;">
+                <h4><?php _e('Create Membership Record', 'board'); ?></h4>
+                <form id="board-membership-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="board-form-field">
+                            <label><?php _e('Full Name', 'board'); ?></label>
+                            <input type="text" name="full_name" required>
+                        </div>
+                        <div class="board-form-field" style="position: relative;">
+                            <label><?php _e('Linked User (Optional)', 'board'); ?></label>
+                            <input type="text" class="board-user-lookup-input" placeholder="<?php _e('Search...', 'board'); ?>" autocomplete="off">
+                            <input type="hidden" name="user_id" value="">
+                            <div class="board-user-lookup-results board-search-suggestions"></div>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Country', 'board'); ?></label>
+                            <input type="text" name="country" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Specialty', 'board'); ?></label>
+                            <input type="text" name="specialty" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Record', 'board'); ?></button>
+                    <button type="button" id="close-add-membership" class="board-btn-black board-btn-outline" style="width: auto;"><?php _e('Cancel', 'board'); ?></button>
+                </form>
+            </div>
+
             <table class="board-table">
                 <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Country / Specialty', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
                 <tbody>
@@ -406,15 +490,25 @@ $user = wp_get_current_user();
                         <?php foreach ($all_memberships as $request) : ?>
                             <tr>
                                 <td><?php echo $request->created_at; ?></td>
-                                <td><?php echo esc_html($request->full_name); ?></td>
+                                <td>
+                                    <?php echo esc_html($request->full_name); ?>
+                                    <?php if ($request->user_id) : ?>
+                                        <br><small style="color: green;">Linked to UID: <?php echo $request->user_id; ?></small>
+                                    <?php else : ?>
+                                        <br><small style="color: darkred;">Unlinked</small>
+                                    <?php endif; ?>
+                                </td>
                                 <td><?php echo esc_html($request->country . ' / ' . $request->specialty); ?></td>
                                 <td><span class="status-badge status-<?php echo $request->status; ?>"><?php echo esc_html($request->status); ?></span></td>
                                 <td>
-                                    <?php if ($request->status == 'pending') : ?>
-                                        <button class="board-btn-black approve-request" data-id="<?php echo $request->id; ?>" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Approve', 'board'); ?></button>
-                                    <?php else: ?>
-                                        <span style="font-size: 11px; color: grey;"><?php _e('No Action Required', 'board'); ?></span>
-                                    <?php endif; ?>
+                                    <div style="display: flex; gap: 5px; align-items: center;">
+                                        <?php if ($request->status == 'pending') : ?>
+                                            <button class="board-btn-black approve-request board-btn-small" data-id="<?php echo $request->id; ?>"><?php _e('Approve', 'board'); ?></button>
+                                        <?php endif; ?>
+                                        <?php if (!$request->user_id) : ?>
+                                            <button class="board-btn-black board-btn-small open-link-membership" data-id="<?php echo $request->id; ?>"><?php _e('Link User', 'board'); ?></button>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -448,12 +542,11 @@ $user = wp_get_current_user();
                             <label><?php _e('Certificate Title / Recipient Name', 'board'); ?></label>
                             <input type="text" name="title" placeholder="<?php _e('e.g., Dr. Jane Smith - Advanced Diploma', 'board'); ?>">
                         </div>
-                        <div class="board-form-field">
+                        <div class="board-form-field" style="position: relative;">
                             <label><?php _e('Assigned User (Optional)', 'board'); ?></label>
-                            <select name="user_id">
-                                <option value=""><?php _e('Manual Creation (No Link)', 'board'); ?></option>
-                                <?php foreach($users_list as $u) echo "<option value='{$u->ID}'>{$u->display_name}</option>"; ?>
-                            </select>
+                            <input type="text" class="board-user-lookup-input" placeholder="<?php _e('Type to search users...', 'board'); ?>" autocomplete="off">
+                            <input type="hidden" name="user_id" value="">
+                            <div class="board-user-lookup-results board-search-suggestions"></div>
                         </div>
                         <div class="board-form-field">
                             <label><?php _e('Accreditation Type', 'board'); ?></label>
@@ -613,6 +706,39 @@ $user = wp_get_current_user();
             </table>
         <?php endif; ?>
 
+        <?php if ($tab == 'applications') : ?>
+            <h3><?php _e('Program Enrollment Applications', 'board'); ?></h3>
+            <table class="board-table">
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Program', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
+                <tbody>
+                    <?php
+                    $apps = DB::get_applications();
+                    if (!empty($apps)) :
+                        foreach ($apps as $app) :
+                            $u = get_userdata($app->user_id);
+                            $p = $wpdb->get_row($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_programs WHERE id = %d", $app->program_id));
+                            ?>
+                            <tr>
+                                <td><?php echo $app->created_at; ?></td>
+                                <td><?php echo $u ? $u->display_name : 'Deleted User'; ?></td>
+                                <td><?php echo $p ? $p->title : 'Deleted Program'; ?></td>
+                                <td><span class="status-badge status-<?php echo $app->status; ?>"><?php echo esc_html($app->status); ?></span></td>
+                                <td>
+                                    <select class="app-status-change" data-id="<?php echo $app->id; ?>" style="padding: 5px; font-size: 11px;">
+                                        <option value="pending" <?php selected($app->status, 'pending'); ?>>Pending</option>
+                                        <option value="approved" <?php selected($app->status, 'approved'); ?>>Approved</option>
+                                        <option value="rejected" <?php selected($app->status, 'rejected'); ?>>Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="5" style="text-align: center;"><?php _e('No applications found.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
         <?php if ($tab == 'settings') : ?>
             <h3><?php _e('System Settings', 'board'); ?></h3>
             <?php $set_tab = isset($_GET['set_tab']) ? $_GET['set_tab'] : 'general'; ?>
@@ -620,6 +746,7 @@ $user = wp_get_current_user();
             <div style="display: flex; border-bottom: 1px solid var(--board-black); margin-bottom: 30px; overflow-x: auto; background: var(--board-grey-100); padding: 5px;">
                 <a href="?cp_tab=settings&set_tab=general" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'general' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('General Configuration', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=design" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'design' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Design & Visual Identity', 'board'); ?></a>
+                <a href="?cp_tab=settings&set_tab=email" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'email' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('System Email & SMTP', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=logs" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'logs' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Audit & Activity Logs', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=backup" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'backup' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Data Backup & Recovery', 'board'); ?></a>
                 <a href="?cp_tab=settings&set_tab=advanced" style="padding: 12px 25px; text-decoration: none; color: black; font-weight: 600; font-size: 13px; <?php echo $set_tab == 'advanced' ? 'background: white; border: 1px solid var(--board-black); border-bottom: none;' : ''; ?>"><?php _e('Advanced System Ops', 'board'); ?></a>
@@ -658,33 +785,149 @@ $user = wp_get_current_user();
                 </form>
             <?php endif; ?>
 
-            <?php if ($set_tab == 'design') : ?>
+            <?php if ($set_tab == 'email') : ?>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                    <div>
+                        <h4><?php _e('SMTP Infrastructure', 'board'); ?></h4>
+                        <form id="board-email-settings-form">
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Enable', 'board'); ?></label>
+                                <select name="email_smtp_enabled">
+                                    <option value="off" <?php selected(get_option('board_email_smtp_enabled'), 'off'); ?>>Off</option>
+                                    <option value="on" <?php selected(get_option('board_email_smtp_enabled'), 'on'); ?>>On</option>
+                                </select>
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Host', 'board'); ?></label>
+                                <input type="text" name="email_smtp_host" value="<?php echo esc_attr(get_option('board_email_smtp_host')); ?>" placeholder="smtp.example.com">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Port', 'board'); ?></label>
+                                <input type="number" name="email_smtp_port" value="<?php echo esc_attr(get_option('board_email_smtp_port', 587)); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Username', 'board'); ?></label>
+                                <input type="text" name="email_smtp_user" value="<?php echo esc_attr(get_option('board_email_smtp_user')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('SMTP Password', 'board'); ?></label>
+                                <input type="password" name="email_smtp_pass" value="<?php echo esc_attr(get_option('board_email_smtp_pass')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Encryption', 'board'); ?></label>
+                                <select name="email_smtp_secure">
+                                    <option value="tls" <?php selected(get_option('board_email_smtp_secure'), 'tls'); ?>>TLS</option>
+                                    <option value="ssl" <?php selected(get_option('board_email_smtp_secure'), 'ssl'); ?>>SSL</option>
+                                </select>
+                            </div>
+                            <hr>
+                            <div class="board-form-field">
+                                <label><?php _e('Sender Identity (Email)', 'board'); ?></label>
+                                <input type="email" name="email_from_address" value="<?php echo esc_attr(get_option('board_email_from_address', get_option('admin_email'))); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Sender Identity (Name)', 'board'); ?></label>
+                                <input type="text" name="email_from_name" value="<?php echo esc_attr(get_option('board_email_from_name', get_bloginfo('name'))); ?>">
+                            </div>
+                            <button type="submit" class="board-btn-black"><?php _e('Save Email Config', 'board'); ?></button>
+                        </form>
+                    </div>
+
+                    <div>
+                        <h4><?php _e('Email Template Manager', 'board'); ?></h4>
+                        <p style="font-size: 12px; color: grey; margin-bottom: 20px;"><?php _e('Customize the content of system-generated emails. Use placeholders like {name}, {code}, {title}.', 'board'); ?></p>
+
+                        <?php
+                        $templates = array(
+                            'registration' => __('Account Registration', 'board'),
+                            'membership_request' => __('Membership Request Received', 'board'),
+                            'membership_approval' => __('Membership Approval', 'board'),
+                            'certificate_issue' => __('Certificate Issuance', 'board'),
+                            'password_otp' => __('Password Reset OTP', 'board')
+                        );
+                        foreach ($templates as $tid => $tlabel) : ?>
+                            <div style="background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <strong style="font-size: 13px;"><?php echo $tlabel; ?></strong>
+                                    <select name="template_<?php echo $tid; ?>_enabled" style="width: auto; padding: 2px 10px; font-size: 11px;">
+                                        <option value="on" <?php selected(get_option('board_email_template_'.$tid.'_enabled', 'on'), 'on'); ?>>Enabled</option>
+                                        <option value="off" <?php selected(get_option('board_email_template_'.$tid.'_enabled'), 'off'); ?>>Disabled</option>
+                                    </select>
+                                </div>
+                                <div class="board-form-field">
+                                    <label style="font-size: 11px;"><?php _e('Subject Line', 'board'); ?></label>
+                                    <input type="text" name="template_<?php echo $tid; ?>_subject" value="<?php echo esc_attr(get_option('board_email_template_'.$tid.'_subject')); ?>" style="padding: 5px 10px; font-size: 12px;">
+                                </div>
+                                <div class="board-form-field" style="margin-bottom: 0;">
+                                    <label style="font-size: 11px;"><?php _e('Email Body', 'board'); ?></label>
+                                    <textarea name="template_<?php echo $tid; ?>_body" rows="4" style="font-size: 12px;"><?php echo esc_textarea(get_option('board_email_template_'.$tid.'_body')); ?></textarea>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <button type="button" class="board-btn-black" id="save-all-email-templates"><?php _e('Update All Templates', 'board'); ?></button>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($set_tab == 'design') : ?>
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px;">
                     <form id="board-design-settings-form" enctype="multipart/form-data">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="board-form-field">
+                                <label><?php _e('Global Layout Style', 'board'); ?></label>
+                                <select name="layout_style">
+                                    <option value="compact" <?php selected(get_option('board_layout_style'), 'compact'); ?>>Compact Professional</option>
+                                    <option value="spacious" <?php selected(get_option('board_layout_style'), 'spacious'); ?>>Spacious Modern</option>
+                                </select>
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Interface Density', 'board'); ?></label>
+                                <select name="ui_density">
+                                    <option value="normal" <?php selected(get_option('board_ui_density'), 'normal'); ?>>Standard</option>
+                                    <option value="high" <?php selected(get_option('board_ui_density'), 'high'); ?>>High Performance (Reduced Padding)</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="board-form-field">
                             <label><?php _e('Upload Logo', 'board'); ?></label>
                             <input type="file" name="board_logo">
                             <?php if ($logo_url = get_option('board_logo_url')) : ?>
-                                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px;">
+                                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px; filter: grayscale(100%);">
                             <?php endif; ?>
                         </div>
-                        <div class="board-form-field">
-                            <label><?php _e('Primary Color (Monochrome)', 'board'); ?></label>
-                            <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="board-form-field">
+                                <label><?php _e('Brand Primary (Mono)', 'board'); ?></label>
+                                <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Typography Family', 'board'); ?></label>
+                                <select name="font_family">
+                                    <option value="-apple-system, system-ui" <?php selected(get_option('board_font_family'), "-apple-system, system-ui"); ?>>System Modern</option>
+                                    <option value="'Inter', sans-serif" <?php selected(get_option('board_font_family'), "'Inter', sans-serif"); ?>>Inter Professional</option>
+                                    <option value="'Roboto Mono', monospace" <?php selected(get_option('board_font_family'), "'Roboto Mono', monospace"); ?>>Technical Mono</option>
+                                </select>
+                            </div>
                         </div>
+
                         <div class="board-form-field">
-                            <label><?php _e('Typography (Font Family)', 'board'); ?></label>
-                            <select name="font_family">
-                                <option value="Arial, sans-serif" <?php selected(get_option('board_font_family'), 'Arial, sans-serif'); ?>>Arial</option>
-                                <option value="'Times New Roman', serif" <?php selected(get_option('board_font_family'), "'Times New Roman', serif"); ?>>Times New Roman</option>
-                                <option value="'Courier New', monospace" <?php selected(get_option('board_font_family'), "'Courier New', monospace"); ?>>Courier New</option>
-                            </select>
+                            <label><?php _e('Interaction Behavior', 'board'); ?></label>
+                            <div style="background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px;">
+                                <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 10px;">
+                                    <input type="checkbox" name="enable_animations" value="on" <?php checked(get_option('board_enable_animations', 'on'), 'on'); ?> style="width: auto;"> <?php _e('Enable Smooth UI Transitions', 'board'); ?>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 0;">
+                                    <input type="checkbox" name="sticky_header" value="on" <?php checked(get_option('board_sticky_header'), 'on'); ?> style="width: auto;"> <?php _e('Enable Sticky Navigation Header', 'board'); ?>
+                                </label>
+                            </div>
                         </div>
+
                         <div class="board-form-field">
-                            <label><?php _e('Custom CSS', 'board'); ?></label>
-                            <textarea name="custom_css" rows="5"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
+                            <label><?php _e('Global Custom CSS', 'board'); ?></label>
+                            <textarea name="custom_css" rows="6" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
                         </div>
-                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Update Visual Identity', 'board'); ?></button>
+                        <button type="submit" class="board-btn-black"><?php _e('Apply Visual Structure', 'board'); ?></button>
                     </form>
 
                     <div id="design-preview">
@@ -768,25 +1011,27 @@ jQuery(document).ready(function($) {
     $('#close-add-user').on('click', function() { $('#add-user-section').slideUp(); });
     $('#open-add-program').on('click', function() { $('#add-program-section').slideDown(); });
     $('#close-add-program').on('click', function() { $('#add-program-section').slideUp(); });
+    $('#open-add-membership').on('click', function() { $('#add-membership-section').slideDown(); });
+    $('#close-add-membership').on('click', function() { $('#add-membership-section').slideUp(); });
     $('#open-add-exam').on('click', function() { $('#add-exam-section').slideDown(); });
     $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
     $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
     $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
 
-    $(document).on('click', '.open-link-cert', function() {
-        var certId = $(this).data('id');
-        var userId = prompt("Enter the User ID to link this certificate to:");
+    $(document).on('click', '.open-link-cert, .open-link-membership', function() {
+        var id = $(this).data('id');
+        var action = $(this).hasClass('open-link-cert') ? 'board_link_certificate' : 'board_link_membership';
+        var dataKey = $(this).hasClass('open-link-cert') ? 'cert_id' : 'membership_id';
+
+        var userId = prompt("Enter the User ID to link to this record:");
         if (userId) {
-            $.post(board_ajax.ajax_url, {
-                action: 'board_link_certificate',
-                nonce: board_ajax.nonce,
-                cert_id: certId,
-                user_id: userId
-            }, function(response) {
+            var postData = { action: action, nonce: board_ajax.nonce, user_id: userId };
+            postData[dataKey] = id;
+            $.post(board_ajax.ajax_url, postData, function(response) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert('Error linking certificate.');
+                    alert('Error linking record.');
                 }
             });
         }

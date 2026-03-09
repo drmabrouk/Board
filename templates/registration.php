@@ -58,16 +58,37 @@ if (!defined('ABSPATH')) {
         <!-- Password Reset Form -->
         <div id="board-reset-view" class="board-auth-view" style="display: none;">
             <h2><?php _e('Reset Password', 'board'); ?></h2>
+
             <form id="board-auth-form-reset" data-action="board_reset">
                 <div class="board-form-field">
                     <label><?php _e('Username or Email', 'board'); ?></label>
                     <input type="text" name="username" placeholder="johndoe@example.com" required>
                 </div>
-                <p style="font-size: 13px; margin-bottom: 20px; color: var(--board-grey-dark);"><?php _e('Enter your username or email address and we will send you a password reset link.', 'board'); ?></p>
-                <button type="submit" class="board-btn-black"><?php _e('Send Link', 'board'); ?></button>
+                <p style="font-size: 13px; margin-bottom: 20px; color: var(--board-grey-dark);"><?php _e('Enter your username or email address and we will send you a 6-digit OTP code.', 'board'); ?></p>
+                <button type="submit" class="board-btn-black"><?php _e('Get OTP Code', 'board'); ?></button>
                 <div class="board-auth-toggle">
                     <a data-target="board-login-view"><?php _e('Back to Login', 'board'); ?></a>
                 </div>
+            </form>
+
+            <form id="board-auth-form-otp" data-action="board_verify_otp" style="display: none;">
+                <div class="board-form-field">
+                    <label><?php _e('Enter 6-Digit OTP', 'board'); ?></label>
+                    <input type="text" name="otp" maxlength="6" pattern="\d{6}" placeholder="123456" required style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+                    <input type="hidden" name="username">
+                </div>
+                <button type="submit" class="board-btn-black"><?php _e('Verify OTP', 'board'); ?></button>
+            </form>
+
+            <form id="board-auth-form-new-pass" data-action="board_reset_password_final" style="display: none;">
+                <div class="board-form-field">
+                    <label><?php _e('New Password', 'board'); ?></label>
+                    <input type="password" name="password" required>
+                    <span class="toggle-password"><?php _e('Show', 'board'); ?></span>
+                </div>
+                <input type="hidden" name="username">
+                <input type="hidden" name="otp">
+                <button type="submit" class="board-btn-black"><?php _e('Update Password', 'board'); ?></button>
             </form>
         </div>
 

@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
     });
 
     // Simple AJAX Auth Handlers
-    $(document).on('submit', '#board-auth-form, #board-auth-form-reg, #board-auth-form-reset', function(e) {
+    $(document).on('submit', '#board-auth-form, #board-auth-form-reg, #board-auth-form-reset, #board-auth-form-otp, #board-auth-form-new-pass', function(e) {
         e.preventDefault();
         var form = $(this);
         var formData = form.serialize();
@@ -65,12 +65,19 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     boardNotify(response.data.message);
-                    if (response.data.redirect) {
+
+                    if (action === 'board_reset') {
+                        $('#board-auth-form-reset').hide();
+                        $('#board-auth-form-otp').fadeIn().find('input[name="username"]').val(response.data.username);
+                    } else if (action === 'board_verify_otp') {
+                        $('#board-auth-form-otp').hide();
+                        $('#board-auth-form-new-pass').fadeIn();
+                        $('#board-auth-form-new-pass input[name="username"]').val(form.find('input[name="username"]').val());
+                        $('#board-auth-form-new-pass input[name="otp"]').val(form.find('input[name="otp"]').val());
+                    } else if (response.data.redirect) {
                         setTimeout(function() { window.location.href = response.data.redirect; }, 1000);
-                    } else if (action !== 'board_reset') {
-                        setTimeout(function() { window.location.reload(); }, 1000);
                     } else {
-                        form.find('button').prop('disabled', false).text('Send Link');
+                        setTimeout(function() { window.location.reload(); }, 1000);
                     }
                 } else {
                     boardNotify(response.data.message, 'error');
@@ -88,15 +95,21 @@ jQuery(document).ready(function($) {
     });
 
     // Live Search: Users
-    $('#user-search, #role-filter').on('keyup change', function() {
+    $('#user-search, #role-filter, #status-filter').on('keyup change', function() {
         var searchVal = $('#user-search').val().toLowerCase();
         var roleVal = $('#role-filter').val();
+        var statusVal = $('#status-filter').val();
 
         $('#users-table tbody tr').each(function() {
             var rowText = $(this).text().toLowerCase();
             var rowRole = $(this).data('role');
-            var show = rowText.indexOf(searchVal) > -1 && (!roleVal || rowRole.indexOf(roleVal) > -1);
-            if (show) $(this).show();
+            var rowStatus = $(this).data('status');
+
+            var showSearch = rowText.indexOf(searchVal) > -1;
+            var showRole = !roleVal || rowRole.indexOf(roleVal) > -1;
+            var showStatus = !statusVal || rowStatus === statusVal;
+
+            if (showSearch && showRole && showStatus) $(this).show();
             else $(this).hide();
         });
     });
@@ -153,14 +166,21 @@ jQuery(document).ready(function($) {
     });
 
     // Live Search: Programs
-    $('#program-search, #program-type-filter').on('keyup change', function() {
+    $('#program-search, #program-type-filter, #program-category-filter').on('keyup change', function() {
         var searchVal = $('#program-search').val().toLowerCase();
         var typeVal = $('#program-type-filter').val().toLowerCase();
+        var catVal = $('#program-category-filter').val().toLowerCase();
 
         $('#admin-programs-grid .board-program-card, .board-programs-grid .board-program-card').each(function() {
             var text = $(this).text().toLowerCase();
-            var show = text.indexOf(searchVal) > -1 && (!typeVal || text.indexOf(typeVal) > -1);
-            if (show) $(this).fadeIn(200);
+            var pType = $(this).data('type') || '';
+            var pCat = $(this).data('category') || '';
+
+            var showSearch = text.indexOf(searchVal) > -1;
+            var showType = !typeVal || pType.indexOf(typeVal) > -1;
+            var showCat = !catVal || pCat.indexOf(catVal) > -1;
+
+            if (showSearch && showType && showCat) $(this).fadeIn(200);
             else $(this).fadeOut(200);
         });
     });
@@ -221,6 +241,42 @@ jQuery(document).ready(function($) {
         window.location.href = $(this).data('url');
     });
 
+    // Dynamic User Lookup logic for forms
+    $(document).on('keyup', '.board-user-lookup-input', function() {
+        var input = $(this);
+        var val = input.val();
+        var target = input.siblings('.board-user-lookup-results');
+        var hiddenInput = input.siblings('input[type="hidden"]');
+
+        if (val.length < 2) {
+            target.hide();
+            hiddenInput.val('');
+            return;
+        }
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_user_lookup',
+            nonce: board_ajax.nonce,
+            term: val
+        }, function(response) {
+            if (response.success && response.data.length > 0) {
+                target.html(response.data.map(u => '<div class="suggestion-item" data-id="' + u.id + '">' + u.text + '</div>').join('')).show();
+            } else {
+                target.hide();
+            }
+        });
+    });
+
+    $(document).on('click', '.board-user-lookup-results .suggestion-item', function() {
+        var item = $(this);
+        var input = item.parent().siblings('.board-user-lookup-input');
+        var hiddenInput = item.parent().siblings('input[type="hidden"]');
+
+        input.val(item.text());
+        hiddenInput.val(item.data('id'));
+        item.parent().hide();
+    });
+
     // Dynamic Role/Status Changes in Table
     $(document).on('change', '.quick-role-change, .quick-status-change', function() {
         var select = $(this);
@@ -235,6 +291,24 @@ jQuery(document).ready(function($) {
         $.post(board_ajax.ajax_url, data, function(response) {
             if (response.success) boardNotify(response.data.message);
             else boardNotify(response.data.message, 'error');
+        });
+    });
+
+    $(document).on('change', '.app-status-change', function() {
+        var select = $(this);
+        var id = select.data('id');
+        var status = select.val();
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_update_application_status',
+            nonce: board_ajax.nonce,
+            app_id: id,
+            status: status
+        }, function(response) {
+            if (response.success) {
+                boardNotify(response.data.message);
+                setTimeout(function() { window.location.reload(); }, 1000);
+            }
         });
     });
 
@@ -281,7 +355,7 @@ jQuery(document).ready(function($) {
     });
 
     // Form Submissions with Notify
-    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form', function(e) {
+    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form, #board-email-settings-form', function(e) {
         e.preventDefault();
         var form = $(this);
         var btn = form.find('button[type="submit"]');
@@ -296,7 +370,8 @@ jQuery(document).ready(function($) {
             'board-generate-cert-form': 'board_generate_certificate',
             'board-add-user-form': 'board_add_user',
             'board-general-settings-form': 'board_save_general_settings',
-            'board-advanced-settings-form': 'board_save_advanced_settings'
+            'board-advanced-settings-form': 'board_save_advanced_settings',
+            'board-email-settings-form': 'board_save_email_settings'
         };
 
         action = actions[form.attr('id')];
@@ -318,7 +393,8 @@ jQuery(document).ready(function($) {
                     if (form.attr('id') === 'board-membership-form') {
                         $('#cm-request-steps').hide();
                         $('#cm-request-success').fadeIn();
-                    } else if (action.indexOf('save') === -1 && action.indexOf('settings') === -1) {
+                    } else {
+                         // Force reload for programs and other management sections to show new data
                          setTimeout(function() { window.location.reload(); }, 1000);
                     }
                 } else {
@@ -431,6 +507,19 @@ jQuery(document).ready(function($) {
     }
 
     // Copy Serial to Clipboard
+    $(document).on('click', '#save-all-email-templates', function() {
+        var btn = $(this);
+        var data = { action: 'board_save_email_templates', nonce: board_ajax.nonce };
+        $('[name^="template_"]').each(function() {
+            data[$(this).attr('name')] = $(this).val();
+        });
+        btn.prop('disabled', true).text('Updating...');
+        $.post(board_ajax.ajax_url, data, function(response) {
+            btn.prop('disabled', false).text('Update All Templates');
+            if (response.success) boardNotify(response.data.message);
+        });
+    });
+
     $(document).on('click', '#copy-serial', function() {
         var serial = $(this).data('serial');
         var btn = $(this);
@@ -457,18 +546,26 @@ jQuery(document).ready(function($) {
             btn.prop('disabled', false).text('Verify Document');
             $('#verify-result').fadeIn();
             if (response.success && response.data.valid) {
-                var status = response.data.is_active ? '<span style="font-weight: bold; border-bottom: 2px solid black;">✔ Valid</span>' : '<span style="color: #666; font-weight: bold;">✘ Expired / Invalid</span>';
-                var html = '<p><strong>Status:</strong> ' + status + '</p>' +
-                           '<p><strong>Holder:</strong> ' + response.data.name + '</p>' +
-                           '<p><strong>Type:</strong> ' + response.data.type + '</p>' +
-                           '<p><strong>Specialty:</strong> ' + response.data.specialty + '</p>' +
-                           '<p><strong>Expires:</strong> ' + response.data.expiry + '</p>';
-                if (response.data.url) html += '<a href="' + response.data.url + '" class="board-btn-black board-btn-small" style="margin-top:10px;">View Digital Certificate</a>';
+                var statusClass = response.data.is_active ? 'status-active' : 'status-expired';
+                var statusText = response.data.is_active ? '✔ AUTHENTICATED' : '✘ EXPIRED / INVALID';
+
+                var html = '<div style="display: grid; grid-template-columns: 1fr; gap: 20px;">' +
+                           '<div style="text-align:center; margin-bottom:20px;"><span class="status-badge ' + statusClass + '" style="font-size:16px; padding:10px 30px;">' + statusText + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Holder Name:</strong> <span>' + response.data.name + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Credential Type:</strong> <span>' + response.data.type + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Specialization:</strong> <span>' + response.data.specialty + '</span></div>' +
+                           '<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px;"><strong>Valid Until:</strong> <span>' + response.data.expiry + '</span></div>';
+
+                if (response.data.url) {
+                    html += '<div style="text-align:center; margin-top:30px;"><a href="' + response.data.url + '" class="board-btn-black" style="width:auto; padding:15px 40px;">View Digital Credential</a></div>';
+                }
+                html += '</div>';
+
                 $('#verify-content').html(html);
-                boardNotify('Verification successful.');
+                boardNotify('Credential verified successfully.');
             } else {
-                $('#verify-content').html('<p style="font-weight: bold; border-bottom: 1px solid black; display: inline-block; padding-bottom: 5px; margin-bottom: 15px;">✘ ' + (response.data.message || 'Invalid or Expired Code') + '</p><p>Please check the code and try again.</p>');
-                boardNotify('Invalid code provided.', 'error');
+                $('#verify-content').html('<div style="text-align:center; padding:30px;"><span class="status-badge status-revoked" style="font-size:16px; padding:10px 30px; margin-bottom:20px;">' + (response.data.message || 'INVALID CREDENTIAL') + '</span><p style="margin-top:20px;">The verification code entered does not match our records or has been permanently revoked.</p></div>');
+                boardNotify('Verification failed.', 'error');
             }
         });
     });

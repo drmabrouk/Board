@@ -17,6 +17,8 @@ class Manager {
         add_action('wp_ajax_board_save_exam', array($this, 'handle_save_exam'));
         add_action('wp_ajax_board_save_design_settings', array($this, 'handle_save_design_settings'));
         add_action('wp_ajax_board_save_advanced_settings', array($this, 'handle_save_advanced_settings'));
+        add_action('wp_ajax_board_save_email_settings', array($this, 'handle_save_email_settings'));
+        add_action('wp_ajax_board_save_email_templates', array($this, 'handle_save_email_templates'));
         add_action('wp_ajax_board_export_json', array($this, 'handle_export_json'));
         add_action('admin_post_board_restore_backup', array($this, 'handle_restore_backup'));
         add_action('wp_ajax_board_save_program', array($this, 'handle_save_program'));
@@ -25,7 +27,12 @@ class Manager {
         add_action('wp_ajax_board_update_user_role', array($this, 'handle_update_role'));
         add_action('wp_ajax_board_update_user_status', array($this, 'handle_update_status'));
         add_action('wp_ajax_board_generate_certificate', array($this, 'handle_generate_certificate'));
+        add_action('wp_ajax_board_link_certificate', array($this, 'handle_link_certificate'));
+        add_action('wp_ajax_board_link_membership', array($this, 'handle_link_membership'));
+        add_action('wp_ajax_board_user_lookup', array($this, 'handle_user_lookup'));
         add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
+        add_action('wp_ajax_board_submit_program_application', array($this, 'handle_submit_application'));
+        add_action('wp_ajax_board_update_application_status', array($this, 'handle_update_application_status'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
@@ -220,6 +227,16 @@ class Manager {
         ));
 
         Plugin::log(__('Certificate Generated', 'board'), sprintf(__('Certificate %s generated.', 'board'), $serial));
+
+        if ($user_id) {
+            $user = get_userdata($user_id);
+            \GSHB\Board\Core\Email::send($user->user_email, 'certificate_issue', array(
+                'name'  => $user->display_name,
+                'title' => $title,
+                'code'  => $serial
+            ));
+        }
+
         wp_send_json_success(array('message' => __('Certificate generated successfully.', 'board'), 'serial' => $serial));
     }
 
@@ -236,6 +253,21 @@ class Manager {
 
         Plugin::log(__('Certificate Linked', 'board'), sprintf(__('Certificate ID %d linked to user ID %d.', 'board'), $cert_id, $user_id));
         wp_send_json_success(array('message' => __('Certificate linked successfully.', 'board')));
+    }
+
+    public function handle_link_membership() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $membership_id = intval($_POST['membership_id']);
+        $user_id = intval($_POST['user_id']);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_memberships';
+        $wpdb->update($table, array('user_id' => $user_id), array('id' => $membership_id));
+
+        Plugin::log(__('Membership Linked', 'board'), sprintf(__('Membership ID %d linked to user ID %d.', 'board'), $membership_id, $user_id));
+        wp_send_json_success(array('message' => __('Membership linked successfully.', 'board')));
     }
 
     public function handle_update_role() {
@@ -309,7 +341,7 @@ class Manager {
 
         $title = sanitize_text_field($_POST['title']);
         $code = sanitize_text_field($_POST['exam_code']);
-        $pid = intval($_POST['program_id']);
+        $pid = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $due = sanitize_text_field($_POST['exam_due']);
 
         DB::save_exam(array(
@@ -327,22 +359,40 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
+        $id = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $title = sanitize_text_field($_POST['title']);
         $desc = sanitize_textarea_field($_POST['desc']);
-        $code = sanitize_text_field($_POST['code']);
         $type = sanitize_text_field($_POST['type']);
+        $category = sanitize_text_field($_POST['category']);
+        $instructor = sanitize_text_field($_POST['instructor']);
+        $credits = intval($_POST['credits']);
         $duration = sanitize_text_field($_POST['duration']);
 
-        DB::save_program(array(
+        // Generate Unique Code if new
+        if (!$id) {
+            global $wpdb;
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}board_programs") + 1;
+            $code = 'GSHB-PROG-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        } else {
+            $code = sanitize_text_field($_POST['code']);
+        }
+
+        $data = array(
             'title' => $title,
             'description' => $desc,
             'code' => $code,
             'type' => $type,
+            'category' => $category,
+            'instructor' => $instructor,
+            'credits' => $credits,
             'duration' => $duration
-        ));
+        );
+        if ($id) $data['id'] = $id;
 
-        Plugin::log(__('Program Created', 'board'), sprintf(__('Program %s created.', 'board'), $title));
-        wp_send_json_success(array('message' => __('Program saved.', 'board')));
+        DB::save_program($data);
+
+        Plugin::log(__('Program Saved', 'board'), sprintf(__('Program %s processed.', 'board'), $title));
+        wp_send_json_success(array('message' => __('Program saved.', 'board'), 'code' => $code));
     }
 
     public function handle_delete_program() {
@@ -361,19 +411,24 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
-        $user_id = intval($_POST['user_id']);
+        $user_id = !empty($_POST['user_id']) ? intval($_POST['user_id']) : null;
         $exam_id = intval($_POST['exam_id']);
 
-        $assigned = get_user_meta($user_id, 'assigned_exams', true);
-        if (!is_array($assigned)) $assigned = array();
+        if ($user_id) {
+            $assigned = get_user_meta($user_id, 'assigned_exams', true);
+            if (!is_array($assigned)) $assigned = array();
 
-        if (!in_array($exam_id, $assigned)) {
-            $assigned[] = $exam_id;
-            update_user_meta($user_id, 'assigned_exams', $assigned);
+            if (!in_array($exam_id, $assigned)) {
+                $assigned[] = $exam_id;
+                update_user_meta($user_id, 'assigned_exams', $assigned);
+            }
+            Plugin::log(__('Exam Assigned', 'board'), sprintf(__('Exam %d assigned to user %d.', 'board'), $exam_id, $user_id));
+        } else {
+            // Log manual entry for exam without user link
+            Plugin::log(__('Exam Record Created', 'board'), sprintf(__('Exam %d record created manually.', 'board'), $exam_id));
         }
 
-        Plugin::log(__('Exam Assigned', 'board'), sprintf(__('Exam %d assigned to user %d.', 'board'), $exam_id, $user_id));
-        wp_send_json_success(array('message' => __('Exam assigned to user.', 'board')));
+        wp_send_json_success(array('message' => __('Exam record processed.', 'board')));
     }
 
     public function handle_approval() {
@@ -416,7 +471,10 @@ class Manager {
 
         Plugin::log(__('Membership Approved', 'board'), sprintf(__('User %d approved for certified membership.', 'board'), $user_id));
 
-        wp_mail($user->user_email, __('Certified Membership Approved - GSHB', 'board'), sprintf(__('Hello %s, your certified membership has been approved. Code: %s', $user->display_name, $verify_code)));
+        \GSHB\Board\Core\Email::send($user->user_email, 'membership_approval', array(
+            'name' => $user->display_name,
+            'code' => $verify_code
+        ));
 
         wp_send_json_success(array('message' => __('Membership approved.', 'board'), 'code' => $verify_code));
     }
@@ -452,6 +510,10 @@ class Manager {
 
         update_option('board_primary_color', sanitize_hex_color($_POST['primary_color']));
         update_option('board_font_family', sanitize_text_field($_POST['font_family']));
+        update_option('board_layout_style', sanitize_text_field($_POST['layout_style']));
+        update_option('board_ui_density', sanitize_text_field($_POST['ui_density']));
+        update_option('board_enable_animations', isset($_POST['enable_animations']) ? 'on' : 'off');
+        update_option('board_sticky_header', isset($_POST['sticky_header']) ? 'on' : 'off');
         update_option('board_custom_css', wp_strip_all_tags($_POST['custom_css']));
 
         Plugin::log(__('Design Updated', 'board'), __('Design and branding settings were updated.', 'board'), get_current_user_id());
@@ -464,6 +526,39 @@ class Manager {
         update_option('board_debug_mode', sanitize_text_field($_POST['debug_mode']));
         Plugin::log(__('Settings Updated', 'board'), __('Advanced settings were updated.', 'board'), get_current_user_id());
         wp_send_json_success(array('message' => __('Advanced settings saved.', 'board')));
+    }
+
+    public function handle_save_email_settings() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        update_option('board_email_smtp_enabled', sanitize_text_field($_POST['email_smtp_enabled']));
+        update_option('board_email_smtp_host', sanitize_text_field($_POST['email_smtp_host']));
+        update_option('board_email_smtp_port', intval($_POST['email_smtp_port']));
+        update_option('board_email_smtp_user', sanitize_text_field($_POST['email_smtp_user']));
+        if (!empty($_POST['email_smtp_pass'])) {
+            update_option('board_email_smtp_pass', $_POST['email_smtp_pass']);
+        }
+        update_option('board_email_smtp_secure', sanitize_text_field($_POST['email_smtp_secure']));
+        update_option('board_email_from_address', sanitize_email($_POST['email_from_address']));
+        update_option('board_email_from_name', sanitize_text_field($_POST['email_from_name']));
+
+        Plugin::log(__('Email Settings Updated', 'board'), __('Email and SMTP settings were updated.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('Email configuration saved.', 'board')));
+    }
+
+    public function handle_save_email_templates() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        foreach ($_POST as $key => $val) {
+            if (strpos($key, 'template_') === 0) {
+                update_option('board_email_' . $key, wp_kses_post($val));
+            }
+        }
+
+        Plugin::log(__('Email Templates Updated', 'board'), __('Email templates were customized.', 'board'), get_current_user_id());
+        wp_send_json_success(array('message' => __('All templates updated.', 'board')));
     }
 
     public function handle_restore_backup() {
@@ -603,5 +698,65 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_memberships';
         return $wpdb->get_results("SELECT * FROM $table WHERE status = 'pending' ORDER BY created_at DESC");
+    }
+
+    public function handle_submit_application() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!is_user_logged_in()) wp_send_json_error();
+
+        $user_id = get_current_user_id();
+        $program_id = intval($_POST['program_id']);
+        $data = $_POST['data'];
+
+        DB::save_application(array(
+            'user_id' => $user_id,
+            'program_id' => $program_id,
+            'status' => 'pending',
+            'data' => $data,
+            'step' => 2
+        ));
+
+        Plugin::log(__('Program Application', 'board'), sprintf(__('User %d applied for program %d.', $user_id, $program_id)));
+        wp_send_json_success(array('message' => __('Application submitted successfully.', 'board')));
+    }
+
+    public function handle_update_application_status() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $id = intval($_POST['app_id']);
+        $status = sanitize_text_field($_POST['status']);
+
+        DB::save_application(array(
+            'id' => $id,
+            'status' => $status
+        ));
+
+        Plugin::log(__('Application Status Updated', 'board'), sprintf(__('Application %d status changed to %s.', $id, $status)));
+        wp_send_json_success(array('message' => __('Status updated.', 'board')));
+    }
+
+    public function handle_user_lookup() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $search = sanitize_text_field($_POST['term']);
+        if (strlen($search) < 2) wp_send_json_success(array());
+
+        $users = get_users(array(
+            'search'         => '*' . $search . '*',
+            'search_columns' => array('user_login', 'user_nicename', 'user_email', 'display_name'),
+            'number'         => 10
+        ));
+
+        $results = array();
+        foreach ($users as $u) {
+            $results[] = array(
+                'id' => $u->ID,
+                'text' => sprintf('%s (@%s) - %s', $u->display_name, $u->user_login, $u->user_email)
+            );
+        }
+
+        wp_send_json_success($results);
     }
 }

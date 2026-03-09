@@ -94,6 +94,10 @@ class Handler {
             wp_set_current_user($user_id);
             wp_set_auth_cookie($user_id);
 
+            \GSHB\Board\Core\Email::send($email, 'registration', array(
+                'name' => $username
+            ));
+
             wp_send_json_success(array('message' => __('Registration successful!', 'board')));
         }
     }
@@ -102,15 +106,64 @@ class Handler {
         check_ajax_referer('board_nonce', 'nonce');
 
         $user_login = sanitize_text_field($_POST['username']);
+        $user = get_user_by('login', $user_login);
+        if (!$user) $user = get_user_by('email', $user_login);
 
-        // Use native WP password retrieval logic
-        $errors = retrieve_password($user_login);
-
-        if (is_wp_error($errors)) {
-            wp_send_json_error(array('message' => $errors->get_error_message()));
+        if (!$user) {
+            wp_send_json_error(array('message' => __('User not found.', 'board')));
         }
 
-        wp_send_json_success(array('message' => __('Password reset link sent to your email.', 'board')));
+        $otp = sprintf('%06d', mt_rand(1, 999999));
+        update_user_meta($user->ID, 'board_password_reset_otp', $otp);
+        update_user_meta($user->ID, 'board_password_reset_otp_time', time());
+
+        \GSHB\Board\Core\Email::send($user->user_email, 'password_otp', array(
+            'name' => $user->display_name,
+            'code' => $otp
+        ));
+
+        wp_send_json_success(array(
+            'message' => __('A 6-digit OTP has been sent to your email.', 'board'),
+            'step' => 'otp_verify',
+            'username' => $user->user_login
+        ));
+    }
+
+    public function handle_verify_otp() {
+        check_ajax_referer('board_nonce', 'nonce');
+        $username = sanitize_text_field($_POST['username']);
+        $otp = sanitize_text_field($_POST['otp']);
+
+        $user = get_user_by('login', $username);
+        if (!$user) wp_send_json_error(array('message' => __('Invalid request.', 'board')));
+
+        $stored_otp = get_user_meta($user->ID, 'board_password_reset_otp', true);
+        $otp_time = get_user_meta($user->ID, 'board_password_reset_otp_time', true);
+
+        if ($stored_otp === $otp && (time() - $otp_time) < 1800) { // 30 mins
+            wp_send_json_success(array('message' => __('OTP verified. Please enter your new password.', 'board')));
+        } else {
+            wp_send_json_error(array('message' => __('Invalid or expired OTP.', 'board')));
+        }
+    }
+
+    public function handle_reset_password_final() {
+        check_ajax_referer('board_nonce', 'nonce');
+        $username = sanitize_text_field($_POST['username']);
+        $otp = sanitize_text_field($_POST['otp']);
+        $new_pass = $_POST['password'];
+
+        $user = get_user_by('login', $username);
+        $stored_otp = get_user_meta($user->ID, 'board_password_reset_otp', true);
+
+        if ($stored_otp !== $otp) wp_send_json_error();
+
+        wp_set_password($new_pass, $user->ID);
+        delete_user_meta($user->ID, 'board_password_reset_otp');
+
+        Plugin::log(__('Password Reset', 'board'), sprintf(__('User %s reset their password via OTP.', $username), $user->ID));
+
+        wp_send_json_success(array('message' => __('Password updated successfully. You can now log in.', 'board')));
     }
 
     public function handle_verification() {
@@ -194,11 +247,12 @@ class Handler {
     public function handle_membership_request() {
         check_ajax_referer('board_nonce', 'nonce');
 
-        if (!is_user_logged_in()) {
+        $user_id = !empty($_POST['user_id']) ? intval($_POST['user_id']) : (is_user_logged_in() ? get_current_user_id() : null);
+
+        if (!$user_id && !Roles::can_access_cp()) {
             wp_send_json_error(array('message' => __('You must be logged in to apply.', 'board')));
         }
 
-        $user_id = get_current_user_id();
         $full_name = sanitize_text_field($_POST['full_name']);
         $country = sanitize_text_field($_POST['country']);
         $specialty = sanitize_text_field($_POST['specialty']);
@@ -249,9 +303,11 @@ class Handler {
             $emails = array_map(function($u) { return $u->user_email; }, $notification_users);
 
             if (!empty($emails)) {
-                $subject = __('New Membership Request - GSHB', 'board');
-                $body = sprintf(__('A new membership request has been submitted by %s. Please review it in the Control Panel.', 'board'), $full_name);
-                wp_mail($emails, $subject, $body);
+                foreach ($emails as $email) {
+                    \GSHB\Board\Core\Email::send($email, 'membership_request', array(
+                        'name' => $full_name
+                    ));
+                }
             }
 
             wp_send_json_success(array('message' => __('Your membership application has been submitted.', 'board')));

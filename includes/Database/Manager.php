@@ -17,13 +17,13 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_programs';
 
-        $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE code = %s", $data['code']));
-
-        if ($exists) {
-            return $wpdb->update($table, $data, array('id' => $exists));
-        } else {
-            return $wpdb->insert($table, $data);
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
         }
+
+        return $wpdb->insert($table, $data);
     }
 
     public static function delete_program($id) {
@@ -104,5 +104,31 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_logs';
         return $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT " . intval($limit));
+    }
+
+    public static function save_application($data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_applications';
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
+        }
+        return $wpdb->insert($table, $data);
+    }
+
+    public static function get_applications($user_id = null, $program_id = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_applications';
+        $query = "SELECT * FROM $table WHERE 1=1";
+        if ($user_id) $query .= $wpdb->prepare(" AND user_id = %d", $user_id);
+        if ($program_id) $query .= $wpdb->prepare(" AND program_id = %d", $program_id);
+        return $wpdb->get_results($query . " ORDER BY created_at DESC");
+    }
+
+    public static function get_program_by_code($code) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_programs';
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE code = %s", $code));
     }
 }

@@ -20,6 +20,9 @@ class Schema {
             title varchar(255) NOT NULL,
             code varchar(50) NOT NULL,
             type varchar(50) DEFAULT 'Course',
+            category varchar(100) DEFAULT NULL,
+            instructor varchar(255) DEFAULT NULL,
+            credits int(11) DEFAULT 0,
             duration varchar(100) DEFAULT NULL,
             description text DEFAULT NULL,
             created_at datetime DEFAULT CURRENT_TIMESTAMP,
@@ -85,5 +88,20 @@ class Schema {
             PRIMARY KEY  (id)
         ) $charset_collate;";
         dbDelta($sql_logs);
+
+        // Program Applications Table
+        $table_applications = $wpdb->prefix . 'board_applications';
+        $sql_applications = "CREATE TABLE $table_applications (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            program_id bigint(20) NOT NULL,
+            status varchar(20) DEFAULT 'pending',
+            data text DEFAULT NULL,
+            step int(11) DEFAULT 1,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_applications);
     }
 }
