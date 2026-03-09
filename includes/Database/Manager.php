@@ -44,7 +44,18 @@ class Manager {
     public static function save_exam($data) {
         global $wpdb;
         $table = $wpdb->prefix . 'board_exams';
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
+        }
         return $wpdb->insert($table, $data);
+    }
+
+    public static function delete_exam($id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_exams';
+        return $wpdb->delete($table, array('id' => $id));
     }
 
     public static function get_certificates($user_id = null) {
@@ -130,5 +141,31 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_programs';
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE code = %s", $code));
+    }
+
+    public static function save_fellowship($data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_fellowships';
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
+        }
+        return $wpdb->insert($table, $data);
+    }
+
+    public static function get_fellowships($user_id = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_fellowships';
+        if ($user_id) {
+            return $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE user_id = %d ORDER BY created_at DESC", $user_id));
+        }
+        return $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC");
+    }
+
+    public static function get_fellowship_by_id($id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_fellowships';
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
     }
 }

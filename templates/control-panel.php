@@ -39,6 +39,7 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'applications') ? 'active' : ''; ?>"><a href="?cp_tab=applications" data-tooltip="<?php _e('Program Enrollments', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Applications', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'fellowships') ? 'active' : ''; ?>"><a href="?cp_tab=fellowships" data-tooltip="<?php _e('Fellowship Reviews', 'board'); ?>"><span class="dashicons dashicons-id-alt"></span> <?php _e('Fellowships', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
@@ -50,17 +51,11 @@ $user = wp_get_current_user();
         <?php
         $tab = isset($_GET['cp_tab']) ? $_GET['cp_tab'] : 'dashboard';
         ?>
-        <div class="board-breadcrumb" style="margin-bottom: 30px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: grey;">
-            <a href="?cp_tab=dashboard"><?php _e('Home', 'board'); ?></a>
-            <?php if ($tab != 'dashboard') : ?>
-                <span style="margin: 0 10px;">/</span>
-                <span style="color: black; font-weight: bold;"><?php echo ucfirst($tab); ?></span>
-            <?php endif; ?>
-        </div>
         <?php
         use GSHB\Board\Database\Manager as DB;
         $pending_requests = \GSHB\Board\Admin\Manager::get_pending_requests();
         $total_pending = count($pending_requests);
+        $progs = DB::get_programs();
         ?>
 
         <?php if ($tab == 'dashboard') : ?>
@@ -262,6 +257,40 @@ $user = wp_get_current_user();
             </table>
         <?php endif; ?>
 
+        <?php if ($tab == 'fellowships') : ?>
+            <h3><?php _e('Fellowship Peer-Review Panel', 'board'); ?></h3>
+            <table class="board-table">
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Evidence', 'board'); ?></th><th><?php _e('Workflow Action', 'board'); ?></th></tr></thead>
+                <tbody>
+                    <?php
+                    $fellows = DB::get_fellowships();
+                    if (!empty($fellows)) :
+                        foreach ($fellows as $f) :
+                            $u = get_userdata($f->user_id);
+                            ?>
+                            <tr>
+                                <td><?php echo $f->created_at; ?></td>
+                                <td><strong><?php echo $f->full_name; ?></strong><br><small><?php echo $u ? $u->user_email : ''; ?></small></td>
+                                <td><span class="status-badge status-<?php echo $f->status; ?>"><?php echo str_replace('_', ' ', $f->status); ?></span></td>
+                                <td><button class="board-btn-black board-btn-small board-btn-outline view-fellow-data" data-id="<?php echo $f->id; ?>"><?php _e('Review Evidence', 'board'); ?></button></td>
+                                <td>
+                                    <select class="fellow-status-change" data-id="<?php echo $f->id; ?>" style="padding: 5px; font-size: 11px;">
+                                        <option value="pending" <?php selected($f->status, 'pending'); ?>>Pending</option>
+                                        <option value="under_review" <?php selected($f->status, 'under_review'); ?>>Peer Review</option>
+                                        <option value="approved" <?php selected($f->status, 'approved'); ?>>Approve Fellow</option>
+                                        <option value="rejected" <?php selected($f->status, 'rejected'); ?>>Reject Application</option>
+                                        <option value="updates_required" <?php selected($f->status, 'updates_required'); ?>>Request Updates</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="5" style="text-align: center;"><?php _e('No active fellowship applications.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
         <?php if ($tab == 'programs') : ?>
             <?php $prog_sub = isset($_GET['prog_sub']) ? $_GET['prog_sub'] : 'list'; ?>
             <div style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 30px; gap: 30px;">
@@ -298,6 +327,7 @@ $user = wp_get_current_user();
                             <select name="type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                                <option value="Professional Certification"><?php _e('Professional Certification', 'board'); ?></option>
                                 <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
                                 <option value="Accreditation"><?php _e('Accreditation', 'board'); ?></option>
                             </select>
@@ -446,53 +476,98 @@ $user = wp_get_current_user();
                 </div>
             </div>
 
-            <div style="margin-bottom: 30px; max-width: 100%; position: relative;">
-                <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Exams', 'board'); ?></label>
-                <input type="text" id="exam-search" placeholder="<?php _e('Search by title or code...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
-                <div id="exam-search-suggestions" class="board-search-suggestions"></div>
+            <div style="margin-bottom: 30px;">
+                <div class="board-form-field" style="margin-bottom: 0; position: relative;">
+                    <label><?php _e('Search Assessments', 'board'); ?></label>
+                    <input type="text" id="exam-search" placeholder="<?php _e('Search by title or exam code...', 'board'); ?>" autocomplete="off">
+                    <div id="exam-search-suggestions" class="board-search-suggestions"></div>
+                </div>
             </div>
 
             <!-- Add Exam Form -->
-            <div id="add-exam-section" style="display: none; background: #f9f9f9; padding: 20px; border: 1px solid var(--board-black); margin-bottom: 30px;">
-                <h4><?php _e('Create New Exam', 'board'); ?></h4>
+            <div id="add-exam-section" style="display: none; background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black); margin-bottom: 30px; border-radius: 8px;">
+                <h4><?php _e('Configure New Examination', 'board'); ?></h4>
                 <form id="board-save-exam-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="board-form-field"><input type="text" name="title" placeholder="Exam Title" required></div>
-                        <div class="board-form-field"><input type="text" name="exam_code" placeholder="Exam Code" required></div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                         <div class="board-form-field">
+                            <label><?php _e('Exam Title', 'board'); ?></label>
+                            <input type="text" name="title" placeholder="<?php _e('e.g., Final Certification Exam', 'board'); ?>" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Unique Exam Code', 'board'); ?></label>
+                            <input type="text" name="exam_code" placeholder="<?php _e('e.g., EXM-2024-001', 'board'); ?>" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Link to Professional Program', 'board'); ?></label>
                             <select name="program_id">
-                                <option value=""><?php _e('Link to Program (Optional)', 'board'); ?></option>
+                                <option value=""><?php _e('Independent Assessment (No Link)', 'board'); ?></option>
                                 <?php foreach($progs as $p) echo "<option value='{$p->id}'>{$p->title}</option>"; ?>
                             </select>
                         </div>
-                        <div class="board-form-field"><input type="date" name="exam_due"></div>
+                        <div class="board-form-field">
+                            <label><?php _e('Submission Deadline', 'board'); ?></label>
+                            <input type="date" name="exam_due">
+                        </div>
                     </div>
-                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Save Exam', 'board'); ?></button>
-                    <button type="button" id="close-add-exam" class="board-btn-black" style="width: auto; background: grey;"><?php _e('Cancel', 'board'); ?></button>
+                    <div style="display: flex; gap: 15px; margin-top: 10px;">
+                        <button type="submit" class="board-btn-black"><?php _e('Save Examination', 'board'); ?></button>
+                        <button type="button" id="close-add-exam" class="board-btn-black board-btn-outline"><?php _e('Cancel', 'board'); ?></button>
+                    </div>
                 </form>
             </div>
 
-            <hr>
-            <h3><?php _e('Assign Exams to Users', 'board'); ?></h3>
-            <form id="board-assign-exam-form" style="margin-bottom: 30px;">
-                <div class="board-form-field" style="position: relative;">
-                    <label><?php _e('Select User Account', 'board'); ?></label>
-                    <input type="text" class="board-user-lookup-input" placeholder="<?php _e('Search by name or email...', 'board'); ?>" autocomplete="off" required>
-                    <input type="hidden" name="user_id" value="">
-                    <div class="board-user-lookup-results board-search-suggestions"></div>
-                </div>
-                <div class="board-form-field">
-                    <label><?php _e('Target Exam', 'board'); ?></label>
-                    <select name="exam_id" required>
-                        <option value=""><?php _e('Select Exam', 'board'); ?></option>
-                        <?php
-                        $exams = DB::get_exams();
-                        foreach($exams as $e) echo "<option value='{$e->id}'>{$e->title}</option>";
+            <div class="board-programs-grid" id="admin-exams-grid" style="padding: 0; margin-bottom: 40px;">
+                <?php
+                $exams_list = DB::get_exams();
+                if (!empty($exams_list)) :
+                    foreach ($exams_list as $e) :
+                        $linked_p = null;
+                        if ($e->program_id) {
+                            foreach($progs as $p) { if($p->id == $e->program_id) { $linked_p = $p->title; break; } }
+                        }
                         ?>
-                    </select>
-                </div>
-                <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Assign Exam', 'board'); ?></button>
-            </form>
+                        <div class="board-program-card" data-title="<?php echo strtolower($e->title . ' ' . $e->code); ?>">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h4 style="margin: 0;"><?php echo esc_html($e->title); ?></h4>
+                                <span class="status-badge" style="background: #eee;"><?php echo esc_html($e->code); ?></span>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 15px;">
+                                <strong><?php _e('Program:', 'board'); ?></strong> <?php echo $linked_p ?: __('Independent', 'board'); ?><br>
+                                <strong><?php _e('Deadline:', 'board'); ?></strong> <?php echo $e->due_date ?: __('No Deadline', 'board'); ?>
+                            </div>
+                            <div style="margin-top: auto; display: flex; gap: 8px; border-top: 1px solid #eee; pt-15;">
+                                <button class="board-btn-black board-btn-small" data-tooltip="<?php _e('Edit exam settings', 'board'); ?>"><?php _e('Edit', 'board'); ?></button>
+                                <button class="board-btn-black board-btn-small board-btn-destructive delete-exam" data-id="<?php echo $e->id; ?>" data-tooltip="<?php _e('Permanently remove exam', 'board'); ?>"><?php _e('Delete', 'board'); ?></button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <p style="grid-column: 1/-1; text-align: center; py-40; color: grey;"><?php _e('No exams configured yet.', 'board'); ?></p>
+                <?php endif; ?>
+            </div>
+
+            <div style="background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black); border-radius: 8px;">
+                <h4 style="margin-top: 0;"><?php _e('Assign Exams to Professional Accounts', 'board'); ?></h4>
+                <p style="font-size: 13px; color: #666; margin-bottom: 25px;"><?php _e('Directly assign assessments to specific members for evaluation and credentialing.', 'board'); ?></p>
+                <form id="board-assign-exam-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="board-form-field" style="position: relative; margin-bottom: 0;">
+                            <label><?php _e('Select Target Member', 'board'); ?></label>
+                            <input type="text" class="board-user-lookup-input" placeholder="<?php _e('Type name or email...', 'board'); ?>" autocomplete="off" required>
+                            <input type="hidden" name="user_id" value="">
+                            <div class="board-user-lookup-results board-search-suggestions"></div>
+                        </div>
+                        <div class="board-form-field" style="margin-bottom: 0;">
+                            <label><?php _e('Select Examination', 'board'); ?></label>
+                            <select name="exam_id" required>
+                                <option value=""><?php _e('Choose from list...', 'board'); ?></option>
+                                <?php foreach($exams_list as $e) echo "<option value='{$e->id}'>{$e->title} ({$e->code})</option>"; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Grant Exam Access', 'board'); ?></button>
+                </form>
+            </div>
         <?php endif; ?>
 
         <?php if ($tab == 'requests') : ?>
@@ -613,15 +688,15 @@ $user = wp_get_current_user();
                 </form>
             </div>
 
-            <div style="margin-bottom: 30px; display: flex; gap: 15px; align-items: flex-end;">
-                <div style="flex-grow: 1; position: relative;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Certificates', 'board'); ?></label>
-                    <input type="text" id="cert-search" placeholder="<?php _e('Search by name, serial or type...', 'board'); ?>" style="width: 100%; padding: 12px; border: 1px solid var(--board-black);" autocomplete="off">
+            <div style="margin-bottom: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: flex-end;">
+                <div class="board-form-field" style="margin-bottom: 0; position: relative;">
+                    <label><?php _e('Search Certificates', 'board'); ?></label>
+                    <input type="text" id="cert-search" placeholder="<?php _e('Search by name, serial or type...', 'board'); ?>" autocomplete="off">
                     <div id="cert-search-suggestions" class="board-search-suggestions"></div>
                 </div>
-                <div>
-                    <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Filter by Status', 'board'); ?></label>
-                    <select id="cert-status-filter" style="padding: 12px; border: 1px solid var(--board-black); min-width: 150px;">
+                <div class="board-form-field" style="margin-bottom: 0;">
+                    <label><?php _e('Filter Status', 'board'); ?></label>
+                    <select id="cert-status-filter">
                         <option value=""><?php _e('All Statuses', 'board'); ?></option>
                         <option value="active"><?php _e('Active', 'board'); ?></option>
                         <option value="revoked"><?php _e('Revoked', 'board'); ?></option>
@@ -635,22 +710,25 @@ $user = wp_get_current_user();
                 if (!empty($certs)) :
                     foreach ($certs as $c) :
                         ?>
-                        <div class="board-program-card" data-title="<?php echo strtolower($c->title . ' ' . $c->serial_number); ?>">
-                            <h4><?php echo esc_html($c->title); ?></h4>
-                            <p style="font-size: 12px; margin-bottom: 10px;">
-                                <strong><?php _e('Type:', 'board'); ?></strong> <?php echo esc_html($c->type); ?> |
-                                <strong><?php _e('Status:', 'board'); ?></strong> <span class="status-badge status-<?php echo $c->status; ?>"><?php echo esc_html($c->status); ?></span>
-                            </p>
-                            <p style="font-size: 13px;"><code><?php echo esc_html($c->serial_number); ?></code></p>
-                            <p style="font-size: 11px; margin-top: 5px; color: grey;">
-                                <?php _e('Issued:', 'board'); ?> <?php echo $c->issue_date; ?> |
-                                <?php if ($c->user_id) : ?>
-                                    <strong>Linked to UID: <?php echo $c->user_id; ?></strong>
-                                <?php else : ?>
-                                    <span style="color: darkred; font-weight: bold;"><?php _e('Unlinked', 'board'); ?></span>
-                                <?php endif; ?>
-                            </p>
-                            <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="board-program-card" data-title="<?php echo strtolower($c->title . ' ' . $c->serial_number); ?>" data-status="<?php echo strtolower($c->status); ?>">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h4 style="margin: 0;"><?php echo esc_html($c->title); ?></h4>
+                                <span class="status-badge status-<?php echo $c->status; ?>"><?php echo esc_html($c->status); ?></span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 12px; color: #666;">
+                                <div><strong><?php _e('Serial:', 'board'); ?></strong><br><code><?php echo esc_html($c->serial_number); ?></code></div>
+                                <div><strong><?php _e('Type:', 'board'); ?></strong><br><?php echo esc_html($c->type); ?></div>
+                                <div><strong><?php _e('Issued:', 'board'); ?></strong><br><?php echo $c->issue_date; ?></div>
+                                <div>
+                                    <strong><?php _e('Ownership:', 'board'); ?></strong><br>
+                                    <?php if ($c->user_id) : ?>
+                                        <span style="color: green;"><?php _e('Linked', 'board'); ?> (UID: <?php echo $c->user_id; ?>)</span>
+                                    <?php else : ?>
+                                        <span style="color: var(--board-destructive);"><?php _e('Unlinked', 'board'); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div style="margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; pt-15; border-top: 1px solid #eee;">
                                 <?php if (!$c->user_id) : ?>
                                     <button class="board-btn-black board-btn-small open-link-cert" data-id="<?php echo $c->id; ?>" data-tooltip="<?php _e('Link this certificate to a user account', 'board'); ?>"><?php _e('Link User', 'board'); ?></button>
                                 <?php endif; ?>

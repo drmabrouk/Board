@@ -20,6 +20,8 @@ class Shortcodes {
         add_shortcode('board_cm_request', array($this, 'render_cm_request'));
         add_shortcode('board_members', array($this, 'render_members'));
         add_shortcode('board_programs', array($this, 'render_programs'));
+        add_shortcode('board_fellowship', array($this, 'render_fellowship'));
+        add_shortcode('board_fellows_directory', array($this, 'render_fellows_directory'));
         add_shortcode('gshb_certificate', array($this, 'render_single_certificate'));
     }
 
@@ -71,6 +73,17 @@ class Shortcodes {
 
     public function render_programs() {
         return $this->load_template('programs.php');
+    }
+
+    public function render_fellowship() {
+        if (!Roles::can_access_mb()) {
+            return '<p>' . __('Please log in to access the Fellowship pathway.', 'board') . '</p>';
+        }
+        return $this->load_template('fellowship-application.php');
+    }
+
+    public function render_fellows_directory() {
+        return $this->load_template('fellows-directory.php');
     }
 
     public function render_single_certificate($atts) {

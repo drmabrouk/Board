@@ -33,7 +33,10 @@ class Manager {
         add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
         add_action('wp_ajax_board_submit_program_application', array($this, 'handle_submit_application'));
         add_action('wp_ajax_board_update_application_status', array($this, 'handle_update_application_status'));
+        add_action('wp_ajax_board_update_fellowship_status', array($this, 'handle_update_fellowship_status'));
+        add_action('wp_ajax_board_get_fellowship_details', array($this, 'handle_get_fellowship_details'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
+        add_action('wp_ajax_board_delete_exam', array($this, 'handle_delete_exam'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
         add_action('admin_post_board_export_users', array($this, 'handle_export_users'));
@@ -85,6 +88,18 @@ class Manager {
         if (DB::delete_certificate($id)) {
             Plugin::log(__('Certificate Deleted', 'board'), sprintf(__('Certificate ID %d deleted.', 'board'), $id), get_current_user_id());
             wp_send_json_success(array('message' => __('Record deleted.', 'board')));
+        } else {
+            wp_send_json_error();
+        }
+    }
+
+    public function handle_delete_exam() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['exam_id']);
+        if (DB::delete_exam($id)) {
+            Plugin::log(__('Exam Deleted', 'board'), sprintf(__('Exam ID %d deleted.', 'board'), $id), get_current_user_id());
+            wp_send_json_success(array('message' => __('Exam deleted.', 'board')));
         } else {
             wp_send_json_error();
         }
@@ -734,6 +749,62 @@ class Manager {
 
         Plugin::log(__('Application Status Updated', 'board'), sprintf(__('Application %d status changed to %s.', $id, $status)));
         wp_send_json_success(array('message' => __('Status updated.', 'board')));
+    }
+
+    public function handle_get_fellowship_details() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $id = intval($_POST['fellow_id']);
+        $fellow = DB::get_fellowship_by_id($id);
+
+        if (!$fellow) wp_send_json_error();
+
+        wp_send_json_success($fellow);
+    }
+
+    public function handle_update_fellowship_status() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $id = intval($_POST['fellow_id']);
+        $status = sanitize_text_field($_POST['status']);
+        $fellow = DB::get_fellowship_by_id($id);
+
+        if (!$fellow) wp_send_json_error();
+
+        DB::save_fellowship(array(
+            'id' => $id,
+            'status' => $status
+        ));
+
+        $user = get_userdata($fellow->user_id);
+
+        if ($status == 'approved') {
+            // Auto generate certificate
+            $serial = 'GSHB-FEL-' . date('Y') . '-' . str_pad($id, 4, '0', STR_PAD_LEFT);
+            DB::save_certificate(array(
+                'user_id' => $fellow->user_id,
+                'title' => __('Fellow of the Global Council for Sports Health', 'board'),
+                'serial_number' => $serial,
+                'type' => 'Fellowship',
+                'status' => 'active'
+            ));
+
+            \GSHB\Board\Core\Email::send($user->user_email, 'membership_approval', array(
+                'name' => $fellow->full_name,
+                'code' => $serial
+            ));
+        } else {
+            // Notify of other status changes
+            \GSHB\Board\Core\Email::send($user->user_email, 'membership_request', array(
+                'name' => $fellow->full_name,
+                'status' => str_replace('_', ' ', $status)
+            ));
+        }
+
+        Plugin::log(__('Fellowship Status Updated', 'board'), sprintf(__('Fellowship application %d changed to %s.', $id, $status)));
+        wp_send_json_success(array('message' => __('Fellowship status updated.', 'board')));
     }
 
     public function handle_user_lookup() {

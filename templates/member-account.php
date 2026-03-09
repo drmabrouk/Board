@@ -26,6 +26,7 @@ $user = wp_get_current_user();
                 <li><a href="#"><span class="dashicons dashicons-email-alt"></span> <?php _e('My Requests', 'board'); ?></a></li>
                 <li><a href="#"><span class="dashicons dashicons-clipboard"></span> <?php _e('My Exams', 'board'); ?></a></li>
                 <li><a href="#"><span class="dashicons dashicons-awards"></span> <?php _e('Certifications', 'board'); ?></a></li>
+                <li><a href="<?php echo home_url('/fellowship'); ?>"><span class="dashicons dashicons-id-alt"></span> <?php _e('Fellowship Application', 'board'); ?></a></li>
                 <li><a href="<?php echo home_url('/cm-request'); ?>"><span class="dashicons dashicons-plus"></span> <?php _e('Upgrade Membership', 'board'); ?></a></li>
                 <li><a href="<?php echo wp_logout_url(home_url('/registration')); ?>"><span class="dashicons dashicons-logout"></span> <?php _e('Logout', 'board'); ?></a></li>
             </ul>

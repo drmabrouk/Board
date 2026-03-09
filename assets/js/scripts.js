@@ -190,15 +190,10 @@ jQuery(document).ready(function($) {
     // Live Search: Exams
     $('#exam-search').on('keyup', function() {
         var val = $(this).val().toLowerCase();
-        $('.board-program-card').each(function() {
-            var title = $(this).find('h3').text().toLowerCase();
-            var code = $(this).find('code').text().toLowerCase();
-            var meta = $(this).text().toLowerCase();
-            if (title || code) {
-                var show = meta.indexOf(val) > -1;
-                if (show) $(this).fadeIn(200);
-                else $(this).fadeOut(200);
-            }
+        $('#admin-exams-grid .board-program-card').each(function() {
+            var text = $(this).data('title') || '';
+            if (text.indexOf(val) > -1) $(this).fadeIn(200);
+            else $(this).fadeOut(200);
         });
     });
 
@@ -264,9 +259,13 @@ jQuery(document).ready(function($) {
         var statusVal = $('#cert-status-filter').val().toLowerCase();
 
         $('#admin-certs-grid .board-program-card').each(function() {
-            var text = $(this).text().toLowerCase();
-            var show = text.indexOf(searchVal) > -1 && (!statusVal || text.indexOf(statusVal) > -1);
-            if (show) $(this).fadeIn(200);
+            var text = $(this).data('title') || '';
+            var status = $(this).data('status') || '';
+
+            var showSearch = text.indexOf(searchVal) > -1;
+            var showStatus = !statusVal || status === statusVal;
+
+            if (showSearch && showStatus) $(this).fadeIn(200);
             else $(this).fadeOut(200);
         });
     });
@@ -386,7 +385,7 @@ jQuery(document).ready(function($) {
     });
 
     // Dynamic Deletion/Revocation
-    $(document).on('click', '.delete-user, .delete-program, .delete-cert, .revoke-cert', function(e) {
+    $(document).on('click', '.delete-user, .delete-program, .delete-cert, .revoke-cert, .delete-exam', function(e) {
         e.preventDefault();
         var btn = $(this);
         var id = btn.data('id');
@@ -398,6 +397,7 @@ jQuery(document).ready(function($) {
         else if (btn.hasClass('delete-program')) { action = 'board_delete_program'; dataKey = 'program_id'; }
         else if (btn.hasClass('delete-cert')) { action = 'board_delete_certificate'; dataKey = 'cert_id'; }
         else if (btn.hasClass('revoke-cert')) { action = 'board_revoke_certificate'; dataKey = 'cert_id'; }
+        else if (btn.hasClass('delete-exam')) { action = 'board_delete_exam'; dataKey = 'exam_id'; }
 
         boardConfirm('Confirm Action', confirmMsg, function() {
             var postData = { action: action, nonce: board_ajax.nonce };
@@ -447,7 +447,9 @@ jQuery(document).ready(function($) {
             'board-email-settings-form': 'board_save_email_settings'
         };
 
-        action = actions[form.attr('id')];
+        action = actions[form.attr('id')] || form.data('action');
+        if (form.attr('id') === 'board-fellowship-form') action = 'board_submit_fellowship';
+
         formData.append('action', action);
         formData.append('nonce', board_ajax.nonce);
 
@@ -596,6 +598,28 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.view-app-data', function() {
         var data = $(this).data('data');
         alert("Application Form Data:\n\n" + data.replace(/&/g, "\n").replace(/=/g, ": "));
+    });
+
+    $(document).on('click', '.view-fellow-data', function() {
+        var id = $(this).data('id');
+        $.post(board_ajax.ajax_url, {
+            action: 'board_get_fellowship_details',
+            nonce: board_ajax.nonce,
+            fellow_id: id
+        }, function(response) {
+            if (response.success) {
+                var f = response.data;
+                var details = "FELLOWSHIP APPLICATION DETAILS\n\n" +
+                    "Name: " + f.full_name + "\n" +
+                    "Qualifications: " + f.qualifications + "\n\n" +
+                    "Experience: " + f.experience + "\n\n" +
+                    "Skills: " + f.skills + "\n\n" +
+                    "Achievements: " + f.achievements + "\n\n" +
+                    "References: " + f.references_data + "\n\n" +
+                    "Evidence URL: " + (f.evidence_url || 'N/A');
+                alert(details);
+            }
+        });
     });
 
     $(document).on('click', '#copy-serial', function() {

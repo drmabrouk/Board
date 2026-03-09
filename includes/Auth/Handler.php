@@ -15,6 +15,8 @@ class Handler {
         add_action('wp_ajax_nopriv_board_register', array($this, 'handle_register'));
         add_action('wp_ajax_nopriv_board_reset', array($this, 'handle_reset'));
         add_action('wp_ajax_nopriv_board_send_reg_otp', array($this, 'handle_send_reg_otp'));
+        add_action('wp_ajax_nopriv_board_verify_otp', array($this, 'handle_verify_otp'));
+        add_action('wp_ajax_nopriv_board_reset_password_final', array($this, 'handle_reset_password_final'));
 
         // Also allow logged in users (though they shouldn't see it)
         add_action('wp_ajax_board_login', array($this, 'handle_login'));
@@ -23,6 +25,7 @@ class Handler {
         add_action('wp_ajax_nopriv_board_verify_document', array($this, 'handle_verification'));
         add_action('wp_ajax_board_verify_document', array($this, 'handle_verification'));
         add_action('wp_ajax_board_submit_exam', array($this, 'handle_exam_submission'));
+        add_action('wp_ajax_board_submit_fellowship', array($this, 'handle_submit_fellowship'));
 
         add_filter('login_redirect', array($this, 'custom_login_redirect'), 10, 3);
         add_action('wp_logout', array($this, 'custom_logout_redirect'));
@@ -238,26 +241,21 @@ class Handler {
             ));
         }
 
-        // 2. Check Certificate Serial Numbers
-        $certs = get_posts(array(
-            'post_type' => 'board_certificate',
-            'meta_key' => 'serial_number',
-            'meta_value' => $code,
-            'posts_per_page' => 1
-        ));
+        // 2. Check Certificate Serial Numbers using Custom DB table
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_certificates';
+        $cert = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE serial_number = %s", $code));
 
-        if (!empty($certs)) {
-            $cert = $certs[0];
-            $uid = get_post_meta($cert->ID, 'user_id', true);
-            $user = get_userdata($uid);
-            $status = get_post_meta($cert->ID, 'cert_status', true);
+        if ($cert) {
+            $uid = $cert->user_id;
+            $user = $uid ? get_userdata($uid) : null;
 
             wp_send_json_success(array(
                 'valid' => true,
-                'is_active' => ($status === 'active'),
-                'name' => $user ? $user->display_name : 'Unknown',
-                'type' => get_post_meta($cert->ID, 'cert_type', true),
-                'specialty' => get_user_meta($uid, 'specialty', true) ?: 'N/A',
+                'is_active' => ($cert->status === 'active'),
+                'name' => $user ? $user->display_name : ($cert->title ?: 'N/A'),
+                'type' => $cert->type,
+                'specialty' => $uid ? (get_user_meta($uid, 'specialty', true) ?: 'N/A') : 'N/A',
                 'expiry' => __('N/A', 'board'),
                 'url' => home_url("/certificate/{$code}")
             ));
@@ -357,6 +355,55 @@ class Handler {
             }
 
             wp_send_json_success(array('message' => __('Your membership application has been submitted.', 'board')));
+        }
+    }
+
+    public function handle_submit_fellowship() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!is_user_logged_in()) wp_send_json_error();
+
+        $user_id = get_current_user_id();
+        $data = array(
+            'user_id' => $user_id,
+            'full_name' => sanitize_text_field($_POST['full_name']),
+            'qualifications' => sanitize_textarea_field($_POST['qualifications']),
+            'experience' => sanitize_textarea_field($_POST['experience']),
+            'skills' => sanitize_textarea_field($_POST['skills']),
+            'achievements' => sanitize_textarea_field($_POST['achievements']),
+            'references_data' => sanitize_textarea_field($_POST['references_data']),
+            'status' => 'pending'
+        );
+
+        // Handle File Evidence
+        if (!empty($_FILES['evidence'])) {
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+            $files = $_FILES['evidence'];
+            foreach ($files['name'] as $key => $value) {
+                if ($files['name'][$key]) {
+                    $file = array(
+                        'name'     => $files['name'][$key],
+                        'type'     => $files['type'][$key],
+                        'tmp_name' => $files['tmp_name'][$key],
+                        'error'    => $files['error'][$key],
+                        'size'     => $files['size'][$key]
+                    );
+                    $attachment_id = media_handle_sideload($file, 0);
+                    if (!is_wp_error($attachment_id)) {
+                        $data['evidence_url'] = wp_get_attachment_url($attachment_id);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (\GSHB\Board\Database\Manager::save_fellowship($data)) {
+            Plugin::log(__('Fellowship Application', 'board'), sprintf(__('User %d applied for Fellowship recognition.', 'board'), $user_id), $user_id);
+            wp_send_json_success(array('message' => __('Your Fellowship application has been submitted for peer-review.', 'board')));
+        } else {
+            wp_send_json_error();
         }
     }
 }
