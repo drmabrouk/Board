@@ -30,7 +30,7 @@ class Roles {
         }
 
         if (!current_user_can('manage_options')) {
-            wp_redirect(home_url());
+            wp_safe_redirect(home_url());
             exit;
         }
     }

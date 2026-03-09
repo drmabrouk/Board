@@ -214,9 +214,9 @@ class Manager {
 
         if (!empty($errors)) {
             set_transient('board_import_errors', $errors, 30);
-            wp_redirect(home_url('/cp?cp_tab=users&import=error'));
+            wp_safe_redirect(home_url('/cp?cp_tab=users&import=error'));
         } else {
-            wp_redirect(home_url('/cp?cp_tab=users&import=success'));
+            wp_safe_redirect(home_url('/cp?cp_tab=users&import=success'));
         }
         exit;
     }
@@ -643,7 +643,7 @@ class Manager {
                 Plugin::log(__('System Restored', 'board'), __('System data was restored from backup.', 'board'), get_current_user_id());
             }
         }
-        wp_redirect(home_url('/cp?cp_tab=settings&set_tab=backup&restore=success'));
+        wp_safe_redirect(home_url('/cp?cp_tab=settings&set_tab=backup&restore=success'));
         exit;
     }
 
@@ -666,7 +666,7 @@ class Manager {
             }
             fclose($file);
         }
-        wp_redirect(home_url('/cp?cp_tab=programs&import=success'));
+        wp_safe_redirect(home_url('/cp?cp_tab=programs&import=success'));
         exit;
     }
 
@@ -689,7 +689,7 @@ class Manager {
             }
             fclose($file);
         }
-        wp_redirect(home_url('/cp?cp_tab=exams&import=success'));
+        wp_safe_redirect(home_url('/cp?cp_tab=exams&import=success'));
         exit;
     }
 
@@ -713,7 +713,7 @@ class Manager {
             }
             fclose($file);
         }
-        wp_redirect(home_url('/cp?cp_tab=certificates&import=success'));
+        wp_safe_redirect(home_url('/cp?cp_tab=certificates&import=success'));
         exit;
     }
 
