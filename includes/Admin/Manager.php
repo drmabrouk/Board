@@ -39,6 +39,7 @@ class Manager {
         add_action('wp_ajax_board_process_exam_request', array($this, 'handle_process_exam_request'));
         add_action('wp_ajax_board_link_exam_questions', array($this, 'handle_link_exam_questions'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
+        add_action('wp_ajax_board_delete_question', array($this, 'handle_delete_question'));
         add_action('wp_ajax_board_delete_exam', array($this, 'handle_delete_exam'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
@@ -94,6 +95,16 @@ class Manager {
         } else {
             wp_send_json_error();
         }
+    }
+
+    public function handle_delete_question() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+        $id = intval($_POST['question_id']);
+        global $wpdb;
+        $wpdb->delete($wpdb->prefix . 'board_questions', array('id' => $id));
+        $wpdb->delete($wpdb->prefix . 'board_exam_questions', array('question_id' => $id));
+        wp_send_json_success(array('message' => __('Question deleted.', 'board')));
     }
 
     public function handle_delete_exam() {
@@ -233,8 +244,9 @@ class Manager {
         $prefix = isset($type_map[$type]) ? $type_map[$type] : 'GEN';
 
         global $wpdb;
-        $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}board_certificates") + 1;
-        $serial = 'GSHB-' . $prefix . '-' . date('Y') . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+        $max_id = $wpdb->get_var("SELECT MAX(id) FROM {$wpdb->prefix}board_certificates");
+        $next_id = ($max_id ? intval($max_id) : 0) + 1;
+        $serial = 'GSHB-' . $prefix . '-' . date('Y') . '-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
 
         DB::save_certificate(array(
             'user_id' => $user_id,
@@ -357,21 +369,34 @@ class Manager {
         check_ajax_referer('board_nonce', 'nonce');
         if (!Roles::can_access_cp()) wp_send_json_error();
 
+        $id = !empty($_POST['exam_id']) ? intval($_POST['exam_id']) : null;
         $title = sanitize_text_field($_POST['title']);
         $code = sanitize_text_field($_POST['exam_code']);
+
+        // Auto-generate code if missing and new
+        if (!$id && empty($code)) {
+            global $wpdb;
+            $max_id = $wpdb->get_var("SELECT MAX(id) FROM {$wpdb->prefix}board_exams");
+            $next_id = ($max_id ? intval($max_id) : 0) + 1;
+            $code = 'EXM-' . date('Y') . '-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
+        }
+
         $pid = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $due = sanitize_text_field($_POST['exam_due']);
         $passing = intval($_POST['passing_percentage'] ?: 60);
         $timer = intval($_POST['time_limit'] ?: 30);
 
-        DB::save_exam(array(
+        $exam_data = array(
             'title' => $title,
             'code' => $code,
             'program_id' => $pid,
             'due_date' => $due,
             'passing_percentage' => $passing,
             'time_limit' => $timer
-        ));
+        );
+        if ($id) $exam_data['id'] = $id;
+
+        DB::save_exam($exam_data);
 
         Plugin::log(__('Exam Configured', 'board'), sprintf(__('Exam %s (Code: %s) saved with passing criteria: %d%%.', $title, $code, $passing)));
         wp_send_json_success(array('message' => __('Exam saved.', 'board')));
@@ -393,8 +418,9 @@ class Manager {
         // Generate Unique Code if new
         if (!$id) {
             global $wpdb;
-            $count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}board_programs") + 1;
-            $code = 'GSHB-PROG-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+            $max_id = $wpdb->get_var("SELECT MAX(id) FROM {$wpdb->prefix}board_programs");
+            $next_id = ($max_id ? intval($max_id) : 0) + 1;
+            $code = 'GSHB-PROG-' . str_pad($next_id, 4, '0', STR_PAD_LEFT);
         } else {
             $code = sanitize_text_field($_POST['code']);
         }

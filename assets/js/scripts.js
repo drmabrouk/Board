@@ -349,6 +349,16 @@ jQuery(document).ready(function($) {
         item.parent().hide();
     });
 
+    // Live Search: Questions
+    $('#question-search').on('keyup', function() {
+        var val = $(this).val().toLowerCase();
+        $('#admin-questions-table tbody tr').each(function() {
+            var text = $(this).text().toLowerCase();
+            if (text.indexOf(val) > -1) $(this).show();
+            else $(this).hide();
+        });
+    });
+
     // Dynamic Role/Status Changes in Table
     $(document).on('change', '.quick-role-change, .quick-status-change', function() {
         var select = $(this);
@@ -398,6 +408,7 @@ jQuery(document).ready(function($) {
         else if (btn.hasClass('delete-cert')) { action = 'board_delete_certificate'; dataKey = 'cert_id'; }
         else if (btn.hasClass('revoke-cert')) { action = 'board_revoke_certificate'; dataKey = 'cert_id'; }
         else if (btn.hasClass('delete-exam')) { action = 'board_delete_exam'; dataKey = 'exam_id'; }
+        else if (btn.hasClass('delete-question')) { action = 'board_delete_question'; dataKey = 'question_id'; }
 
         boardConfirm('Confirm Action', confirmMsg, function() {
             var postData = { action: action, nonce: board_ajax.nonce };
@@ -428,7 +439,7 @@ jQuery(document).ready(function($) {
     });
 
     // Form Submissions with Notify
-    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form, #board-email-settings-form', function(e) {
+    $(document).on('submit', '#board-membership-form, #board-save-program-form, #board-save-exam-form, #board-save-question-form, #board-generate-cert-form, #board-add-user-form, #board-general-settings-form, #board-advanced-settings-form, #board-email-settings-form, #board-design-settings-form, #board-fellowship-form', function(e) {
         e.preventDefault();
         var form = $(this);
         var btn = form.find('button[type="submit"]');
@@ -445,7 +456,9 @@ jQuery(document).ready(function($) {
             'board-add-user-form': 'board_add_user',
             'board-general-settings-form': 'board_save_general_settings',
             'board-advanced-settings-form': 'board_save_advanced_settings',
-            'board-email-settings-form': 'board_save_email_settings'
+            'board-email-settings-form': 'board_save_email_settings',
+            'board-design-settings-form': 'board_save_design_settings',
+            'board-fellowship-form': 'board_submit_fellowship'
         };
 
         action = actions[form.attr('id')] || form.data('action');
@@ -469,8 +482,11 @@ jQuery(document).ready(function($) {
                     if (form.attr('id') === 'board-membership-form') {
                         $('#cm-request-steps').hide();
                         $('#cm-request-success').fadeIn();
+                    } else if (form.attr('id') === 'board-save-program-form') {
+                        // Dynamic update for programs grid
+                        location.reload(); // Still reloading for complex UI structures for now, but ensured persistence
                     } else {
-                         // Force reload for programs and other management sections to show new data
+                         // Force reload for other management sections for consistency
                          setTimeout(function() { window.location.reload(); }, 1000);
                     }
                 } else {
@@ -516,29 +532,6 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Exam Submission Handler (Public)
-    $(document).on('click', '.start-exam', function() {
-        var btn = $(this);
-        var examId = btn.data('id');
-        if (confirm('Do you want to submit this exam with a random score for demo?')) {
-            var score = Math.floor(Math.random() * 40) + 60; // 60-100
-            btn.prop('disabled', true).text('Submitting...');
-            $.post(board_ajax.ajax_url, {
-                action: 'board_submit_exam',
-                nonce: board_ajax.nonce,
-                exam_id: examId,
-                score: score
-            }, function(response) {
-                if (response.success) {
-                    boardNotify(response.data.message);
-                    setTimeout(function() { window.location.href = board_ajax.mb_url || '/mb'; }, 1500);
-                } else {
-                    boardNotify(response.data.message, 'error');
-                    btn.prop('disabled', false).text('Start Exam');
-                }
-            });
-        }
-    });
 
     // Approval Request Handler
     $('.approve-request').on('click', function() {
