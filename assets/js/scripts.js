@@ -447,7 +447,9 @@ jQuery(document).ready(function($) {
             'board-email-settings-form': 'board_save_email_settings'
         };
 
-        action = actions[form.attr('id')];
+        action = actions[form.attr('id')] || form.data('action');
+        if (form.attr('id') === 'board-fellowship-form') action = 'board_submit_fellowship';
+
         formData.append('action', action);
         formData.append('nonce', board_ajax.nonce);
 
@@ -596,6 +598,28 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.view-app-data', function() {
         var data = $(this).data('data');
         alert("Application Form Data:\n\n" + data.replace(/&/g, "\n").replace(/=/g, ": "));
+    });
+
+    $(document).on('click', '.view-fellow-data', function() {
+        var id = $(this).data('id');
+        $.post(board_ajax.ajax_url, {
+            action: 'board_get_fellowship_details',
+            nonce: board_ajax.nonce,
+            fellow_id: id
+        }, function(response) {
+            if (response.success) {
+                var f = response.data;
+                var details = "FELLOWSHIP APPLICATION DETAILS\n\n" +
+                    "Name: " + f.full_name + "\n" +
+                    "Qualifications: " + f.qualifications + "\n\n" +
+                    "Experience: " + f.experience + "\n\n" +
+                    "Skills: " + f.skills + "\n\n" +
+                    "Achievements: " + f.achievements + "\n\n" +
+                    "References: " + f.references_data + "\n\n" +
+                    "Evidence URL: " + (f.evidence_url || 'N/A');
+                alert(details);
+            }
+        });
     });
 
     $(document).on('click', '#copy-serial', function() {

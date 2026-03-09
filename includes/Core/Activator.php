@@ -74,6 +74,16 @@ class Activator {
                 'content' => '[board_programs]',
                 'slug'    => 'programs'
             ),
+            'fellowship' => array(
+                'title'   => 'Fellowship Pathway',
+                'content' => '[board_fellowship]',
+                'slug'    => 'fellowship'
+            ),
+            'fellows' => array(
+                'title'   => 'Directory of Fellows',
+                'content' => '[board_fellows_directory]',
+                'slug'    => 'fellows'
+            ),
         );
 
         foreach ($pages as $key => $page) {

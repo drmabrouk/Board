@@ -39,6 +39,7 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'applications') ? 'active' : ''; ?>"><a href="?cp_tab=applications" data-tooltip="<?php _e('Program Enrollments', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Applications', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'fellowships') ? 'active' : ''; ?>"><a href="?cp_tab=fellowships" data-tooltip="<?php _e('Fellowship Reviews', 'board'); ?>"><span class="dashicons dashicons-id-alt"></span> <?php _e('Fellowships', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
@@ -256,6 +257,40 @@ $user = wp_get_current_user();
             </table>
         <?php endif; ?>
 
+        <?php if ($tab == 'fellowships') : ?>
+            <h3><?php _e('Fellowship Peer-Review Panel', 'board'); ?></h3>
+            <table class="board-table">
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Evidence', 'board'); ?></th><th><?php _e('Workflow Action', 'board'); ?></th></tr></thead>
+                <tbody>
+                    <?php
+                    $fellows = DB::get_fellowships();
+                    if (!empty($fellows)) :
+                        foreach ($fellows as $f) :
+                            $u = get_userdata($f->user_id);
+                            ?>
+                            <tr>
+                                <td><?php echo $f->created_at; ?></td>
+                                <td><strong><?php echo $f->full_name; ?></strong><br><small><?php echo $u ? $u->user_email : ''; ?></small></td>
+                                <td><span class="status-badge status-<?php echo $f->status; ?>"><?php echo str_replace('_', ' ', $f->status); ?></span></td>
+                                <td><button class="board-btn-black board-btn-small board-btn-outline view-fellow-data" data-id="<?php echo $f->id; ?>"><?php _e('Review Evidence', 'board'); ?></button></td>
+                                <td>
+                                    <select class="fellow-status-change" data-id="<?php echo $f->id; ?>" style="padding: 5px; font-size: 11px;">
+                                        <option value="pending" <?php selected($f->status, 'pending'); ?>>Pending</option>
+                                        <option value="under_review" <?php selected($f->status, 'under_review'); ?>>Peer Review</option>
+                                        <option value="approved" <?php selected($f->status, 'approved'); ?>>Approve Fellow</option>
+                                        <option value="rejected" <?php selected($f->status, 'rejected'); ?>>Reject Application</option>
+                                        <option value="updates_required" <?php selected($f->status, 'updates_required'); ?>>Request Updates</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="5" style="text-align: center;"><?php _e('No active fellowship applications.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
         <?php if ($tab == 'programs') : ?>
             <?php $prog_sub = isset($_GET['prog_sub']) ? $_GET['prog_sub'] : 'list'; ?>
             <div style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 30px; gap: 30px;">
@@ -292,6 +327,7 @@ $user = wp_get_current_user();
                             <select name="type" required>
                                 <option value="Course"><?php _e('Course', 'board'); ?></option>
                                 <option value="Diploma"><?php _e('Diploma', 'board'); ?></option>
+                                <option value="Professional Certification"><?php _e('Professional Certification', 'board'); ?></option>
                                 <option value="Board Membership"><?php _e('Board Membership', 'board'); ?></option>
                                 <option value="Accreditation"><?php _e('Accreditation', 'board'); ?></option>
                             </select>

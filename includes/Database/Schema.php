@@ -103,5 +103,24 @@ class Schema {
             PRIMARY KEY  (id)
         ) $charset_collate;";
         dbDelta($sql_applications);
+
+        // Fellowships Table
+        $table_fellowships = $wpdb->prefix . 'board_fellowships';
+        $sql_fellowships = "CREATE TABLE $table_fellowships (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            full_name varchar(255) NOT NULL,
+            qualifications text DEFAULT NULL,
+            experience text DEFAULT NULL,
+            skills text DEFAULT NULL,
+            achievements text DEFAULT NULL,
+            references_data text DEFAULT NULL,
+            evidence_url text DEFAULT NULL,
+            status varchar(30) DEFAULT 'pending',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_fellowships);
     }
 }
