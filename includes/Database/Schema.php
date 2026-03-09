@@ -122,5 +122,57 @@ class Schema {
             PRIMARY KEY  (id)
         ) $charset_collate;";
         dbDelta($sql_fellowships);
+
+        // Questions Table
+        $table_questions = $wpdb->prefix . 'board_questions';
+        $sql_questions = "CREATE TABLE $table_questions (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            category varchar(100) DEFAULT NULL,
+            specialization varchar(100) DEFAULT NULL,
+            type varchar(20) DEFAULT 'MCQ',
+            question_text text NOT NULL,
+            options text DEFAULT NULL,
+            correct_answer text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_questions);
+
+        // Exam-Question Linking Table
+        $table_exam_questions = $wpdb->prefix . 'board_exam_questions';
+        $sql_exam_questions = "CREATE TABLE $table_exam_questions (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            exam_id bigint(20) NOT NULL,
+            question_id bigint(20) NOT NULL,
+            q_order int(11) DEFAULT 0,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_exam_questions);
+
+        // Exam Requests Table
+        $table_exam_requests = $wpdb->prefix . 'board_exam_requests';
+        $sql_exam_requests = "CREATE TABLE $table_exam_requests (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            exam_id bigint(20) NOT NULL,
+            status varchar(20) DEFAULT 'pending',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_exam_requests);
+
+        // Exam Results / Submissions Table
+        $table_exam_results = $wpdb->prefix . 'board_exam_results';
+        $sql_exam_results = "CREATE TABLE $table_exam_results (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            exam_id bigint(20) NOT NULL,
+            answers text DEFAULT NULL,
+            score int(11) DEFAULT 0,
+            status varchar(20) DEFAULT 'pending',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id)
+        ) $charset_collate;";
+        dbDelta($sql_exam_results);
     }
 }

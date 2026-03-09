@@ -440,6 +440,7 @@ jQuery(document).ready(function($) {
             'board-membership-form': 'board_membership_request',
             'board-save-program-form': 'board_save_program',
             'board-save-exam-form': 'board_save_exam',
+            'board-save-question-form': 'board_save_question',
             'board-generate-cert-form': 'board_generate_certificate',
             'board-add-user-form': 'board_add_user',
             'board-general-settings-form': 'board_save_general_settings',
@@ -630,6 +631,45 @@ jQuery(document).ready(function($) {
             btn.html('✔ Copied!');
             boardNotify('Serial number copied to clipboard.');
             setTimeout(function() { btn.html(originalHtml); }, 2000);
+        });
+    });
+
+    // Exam Session Submission Handler
+    $(document).on('submit', '#board-exam-submission-form', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var btn = form.find('button[type="submit"]');
+        var formData = form.serialize();
+
+        btn.prop('disabled', true).text('Finalizing Submission...');
+
+        $.post(board_ajax.ajax_url, formData + '&action=board_submit_exam&nonce=' + board_ajax.nonce, function(response) {
+            if (response.success) {
+                alert('Your assessment has been submitted successfully! Final Score: ' + response.data.score + '%');
+                window.location.href = board_ajax.mb_url;
+            } else {
+                boardNotify('An error occurred during submission.', 'error');
+                btn.prop('disabled', false).text('Complete Assessment');
+            }
+        });
+    });
+
+    // Exam Request Handler
+    $(document).on('submit', '#board-exam-request-form', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var btn = form.find('button');
+        var data = form.serialize();
+
+        btn.prop('disabled', true).text('Submitting...');
+        $.post(board_ajax.ajax_url, data + '&action=board_request_exam&nonce=' + board_ajax.nonce, function(response) {
+            if (response.success) {
+                boardNotify(response.data.message);
+                form.find('select').val('');
+            } else {
+                boardNotify(response.data.message, 'error');
+            }
+            btn.prop('disabled', false).text('Submit Request');
         });
     });
 

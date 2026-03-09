@@ -52,7 +52,7 @@ if (!empty($assigned_exam_ids)) {
         </div>
 
         <?php if (!empty($assigned_exams)) : ?>
-            <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 50px;">
             <?php foreach ($assigned_exams as $exam) : ?>
                 <div class="board-program-card" style="border-left: 10px solid #000;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 30px;">
@@ -64,16 +64,38 @@ if (!empty($assigned_exam_ids)) {
                                 <span><strong><?php _e('Status:', 'board'); ?></strong> <span style="color: #000; font-weight: 800;"><?php _e('Awaiting Completion', 'board'); ?></span></span>
                             </div>
                         </div>
-                        <button class="board-btn-black start-exam" data-id="<?php echo $exam['id']; ?>" style="padding: 18px 50px; font-size: 14px;"><?php _e('Launch Assessment', 'board'); ?></button>
+                        <a href="<?php echo home_url('/board-session?exam_id=' . $exam['id']); ?>" class="board-btn-black" style="padding: 18px 50px; font-size: 14px; text-decoration: none; text-align: center;"><?php _e('Launch Assessment', 'board'); ?></a>
                     </div>
                 </div>
             <?php endforeach; ?>
             </div>
         <?php else : ?>
-            <div class="board-program-card" style="text-align: center;">
+            <div class="board-program-card" style="text-align: center; margin-bottom: 50px;">
                 <p><?php _e('No exams have been assigned to you at this time.', 'board'); ?></p>
             </div>
         <?php endif; ?>
+
+        <div style="background: #f9f9f9; padding: 40px; border-radius: 12px; border: 1px solid #000;">
+            <h3 style="margin-top: 0;"><?php _e('Apply for New Examination', 'board'); ?></h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 25px;"><?php _e('If you wish to participate in a specific professional assessment, please select the exam below to submit a participation request.', 'board'); ?></p>
+            <form id="board-exam-request-form" style="display: flex; gap: 15px; align-items: flex-end;">
+                <div class="board-form-field" style="flex-grow: 1; margin-bottom: 0;">
+                    <label><?php _e('Available Assessments', 'board'); ?></label>
+                    <select name="exam_id" required>
+                        <option value=""><?php _e('Select an exam...', 'board'); ?></option>
+                        <?php
+                        $all_exams = \GSHB\Board\Database\Manager::get_exams();
+                        foreach ($all_exams as $ae) {
+                            if (!in_array($ae->id, $assigned_exam_ids)) {
+                                echo "<option value='{$ae->id}'>{$ae->title} ({$ae->code})</option>";
+                            }
+                        }
+                        ?>
+                    </select>
+                </div>
+                <button type="submit" class="board-btn-black" style="width: auto; padding: 15px 40px;"><?php _e('Submit Request', 'board'); ?></button>
+            </form>
+        </div>
 
         <div style="margin-top: 20px; text-align: center;">
             <a href="<?php echo home_url('/programs'); ?>" style="color: var(--board-black); text-decoration: underline;"><?php _e('Back to Programs', 'board'); ?></a>

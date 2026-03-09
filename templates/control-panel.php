@@ -39,6 +39,7 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'applications') ? 'active' : ''; ?>"><a href="?cp_tab=applications" data-tooltip="<?php _e('Program Enrollments', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Applications', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'qbank') ? 'active' : ''; ?>"><a href="?cp_tab=qbank" data-tooltip="<?php _e('Question Bank', 'board'); ?>"><span class="dashicons dashicons-database"></span> <?php _e('Question Bank', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'fellowships') ? 'active' : ''; ?>"><a href="?cp_tab=fellowships" data-tooltip="<?php _e('Fellowship Reviews', 'board'); ?>"><span class="dashicons dashicons-id-alt"></span> <?php _e('Fellowships', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
@@ -257,7 +258,105 @@ $user = wp_get_current_user();
             </table>
         <?php endif; ?>
 
+        <?php if ($tab == 'qbank') : ?>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3><?php _e('Professional Question Bank', 'board'); ?></h3>
+                <button class="board-btn-black" id="open-add-question" style="width: auto; padding: 5px 15px; font-size: 12px;"><?php _e('Add Question', 'board'); ?></button>
+            </div>
+
+            <!-- Add Question Form -->
+            <div id="add-question-section" style="display: none; background: #f9f9f9; padding: 30px; border: 1px solid var(--board-black); margin-bottom: 30px; border-radius: 8px;">
+                <h4><?php _e('Add Question to Bank', 'board'); ?></h4>
+                <form id="board-save-question-form">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div class="board-form-field">
+                            <label><?php _e('Category', 'board'); ?></label>
+                            <input type="text" name="category" placeholder="e.g., Nutrition" required>
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Specialization', 'board'); ?></label>
+                            <input type="text" name="specialization" placeholder="e.g., Clinical">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Question Type', 'board'); ?></label>
+                            <select name="type">
+                                <option value="MCQ"><?php _e('Multiple Choice', 'board'); ?></option>
+                                <option value="Written"><?php _e('Written Response', 'board'); ?></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="board-form-field">
+                        <label><?php _e('Question Text', 'board'); ?></label>
+                        <textarea name="question_text" rows="3" required></textarea>
+                    </div>
+                    <div id="mcq-options">
+                        <label style="font-size: 11px; font-weight: bold; text-transform: uppercase;"><?php _e('MCQ Options (One per line)', 'board'); ?></label>
+                        <textarea name="options[]" rows="4" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+                    </div>
+                    <div class="board-form-field" style="margin-top: 15px;">
+                        <label><?php _e('Correct Answer (or Key points)', 'board'); ?></label>
+                        <input type="text" name="correct_answer">
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-top: 15px;">
+                        <button type="submit" class="board-btn-black"><?php _e('Save to Bank', 'board'); ?></button>
+                        <button type="button" id="close-add-question" class="board-btn-black board-btn-outline"><?php _e('Cancel', 'board'); ?></button>
+                    </div>
+                </form>
+            </div>
+
+            <table class="board-table">
+                <thead><tr><th><?php _e('Category / specialization', 'board'); ?></th><th><?php _e('Type', 'board'); ?></th><th><?php _e('Question', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
+                <tbody>
+                    <?php
+                    $questions = DB::get_questions();
+                    foreach ($questions as $q) : ?>
+                        <tr>
+                            <td><strong><?php echo esc_html($q->category); ?></strong><br><small><?php echo esc_html($q->specialization); ?></small></td>
+                            <td><?php echo $q->type; ?></td>
+                            <td><?php echo wp_trim_words($q->question_text, 15); ?></td>
+                            <td><button class="board-btn-black board-btn-small"><?php _e('Edit', 'board'); ?></button></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
         <?php if ($tab == 'fellowships') : ?>
+            <div style="margin-bottom: 50px;">
+                <h3><?php _e('Exam Request & Evaluation Section', 'board'); ?></h3>
+                <p style="font-size: 13px; color: #666; margin-bottom: 25px;"><?php _e('Review member requests for assessment participation and grant access to professional exams.', 'board'); ?></p>
+                <table class="board-table">
+                    <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Requested Exam', 'board'); ?></th><th><?php _e('Workflow Action', 'board'); ?></th></tr></thead>
+                    <tbody>
+                        <?php
+                        $exam_reqs = DB::get_exam_requests();
+                        if (!empty($exam_reqs)) :
+                            foreach ($exam_reqs as $er) :
+                                $u = get_userdata($er->user_id);
+                                $e = $wpdb->get_row($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_exams WHERE id = %d", $er->exam_id));
+                                ?>
+                                <tr>
+                                    <td><?php echo $er->created_at; ?></td>
+                                    <td><strong><?php echo $u ? $u->display_name : 'User'; ?></strong></td>
+                                    <td><?php echo $e ? $e->title : 'Exam'; ?></td>
+                                    <td>
+                                        <select class="exam-req-status-change" data-id="<?php echo $er->id; ?>" style="padding: 5px; font-size: 11px;">
+                                            <option value="pending" <?php selected($er->status, 'pending'); ?>>Pending Review</option>
+                                            <option value="approved" <?php selected($er->status, 'approved'); ?>>Approve Request</option>
+                                            <option value="rejected" <?php selected($er->status, 'rejected'); ?>>Reject Request</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <tr><td colspan="4" style="text-align: center;"><?php _e('No active exam participation requests.', 'board'); ?></td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin-bottom: 40px;">
+
             <h3><?php _e('Fellowship Peer-Review Panel', 'board'); ?></h3>
             <table class="board-table">
                 <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Evidence', 'board'); ?></th><th><?php _e('Workflow Action', 'board'); ?></th></tr></thead>
@@ -507,6 +606,14 @@ $user = wp_get_current_user();
                         <div class="board-form-field">
                             <label><?php _e('Submission Deadline', 'board'); ?></label>
                             <input type="date" name="exam_due">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Passing Percentage (%)', 'board'); ?></label>
+                            <input type="number" name="passing_percentage" value="60" min="1" max="100">
+                        </div>
+                        <div class="board-form-field">
+                            <label><?php _e('Time Limit (Minutes)', 'board'); ?></label>
+                            <input type="number" name="time_limit" value="30" min="1">
                         </div>
                     </div>
                     <div style="display: flex; gap: 15px; margin-top: 10px;">
@@ -1144,6 +1251,8 @@ jQuery(document).ready(function($) {
     $('#close-add-exam').on('click', function() { $('#add-exam-section').slideUp(); });
     $('#open-generate-cert').on('click', function() { $('#generate-cert-section').slideDown(); });
     $('#close-generate-cert').on('click', function() { $('#generate-cert-section').slideUp(); });
+    $('#open-add-question').on('click', function() { $('#add-question-section').slideDown(); });
+    $('#close-add-question').on('click', function() { $('#add-question-section').slideUp(); });
 
     $(document).on('click', '.open-link-cert, .open-link-membership', function() {
         var id = $(this).data('id');

@@ -35,6 +35,9 @@ class Manager {
         add_action('wp_ajax_board_update_application_status', array($this, 'handle_update_application_status'));
         add_action('wp_ajax_board_update_fellowship_status', array($this, 'handle_update_fellowship_status'));
         add_action('wp_ajax_board_get_fellowship_details', array($this, 'handle_get_fellowship_details'));
+        add_action('wp_ajax_board_save_question', array($this, 'handle_save_question'));
+        add_action('wp_ajax_board_process_exam_request', array($this, 'handle_process_exam_request'));
+        add_action('wp_ajax_board_link_exam_questions', array($this, 'handle_link_exam_questions'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
         add_action('wp_ajax_board_delete_exam', array($this, 'handle_delete_exam'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
@@ -358,15 +361,19 @@ class Manager {
         $code = sanitize_text_field($_POST['exam_code']);
         $pid = !empty($_POST['program_id']) ? intval($_POST['program_id']) : null;
         $due = sanitize_text_field($_POST['exam_due']);
+        $passing = intval($_POST['passing_percentage'] ?: 60);
+        $timer = intval($_POST['time_limit'] ?: 30);
 
         DB::save_exam(array(
             'title' => $title,
             'code' => $code,
             'program_id' => $pid,
-            'due_date' => $due
+            'due_date' => $due,
+            'passing_percentage' => $passing,
+            'time_limit' => $timer
         ));
 
-        Plugin::log(__('Exam Created', 'board'), sprintf(__('Exam %s created.', 'board'), $title));
+        Plugin::log(__('Exam Configured', 'board'), sprintf(__('Exam %s (Code: %s) saved with passing criteria: %d%%.', $title, $code, $passing)));
         wp_send_json_success(array('message' => __('Exam saved.', 'board')));
     }
 
@@ -761,6 +768,85 @@ class Manager {
         if (!$fellow) wp_send_json_error();
 
         wp_send_json_success($fellow);
+    }
+
+    public function handle_save_question() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $options = isset($_POST['options'][0]) ? explode("\n", str_replace("\r", "", $_POST['options'][0])) : array();
+        $options = array_filter(array_map('trim', $options));
+
+        $data = array(
+            'category' => sanitize_text_field($_POST['category']),
+            'specialization' => sanitize_text_field($_POST['specialization']),
+            'type' => sanitize_text_field($_POST['type']),
+            'question_text' => sanitize_textarea_field($_POST['question_text']),
+            'options' => wp_json_encode(array_values($options)),
+            'correct_answer' => sanitize_text_field($_POST['correct_answer'])
+        );
+
+        if (!empty($_POST['question_id'])) $data['id'] = intval($_POST['question_id']);
+
+        DB::save_question($data);
+        wp_send_json_success(array('message' => __('Question saved to bank.', 'board')));
+    }
+
+    public function handle_link_exam_questions() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $exam_id = intval($_POST['exam_id']);
+        $question_ids = array_map('intval', $_POST['question_ids']);
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_exam_questions';
+
+        // Clear existing links
+        $wpdb->delete($table, array('exam_id' => $exam_id));
+
+        // Insert new links
+        foreach ($question_ids as $idx => $qid) {
+            $wpdb->insert($table, array(
+                'exam_id' => $exam_id,
+                'question_id' => $qid,
+                'q_order' => $idx
+            ));
+        }
+
+        wp_send_json_success(array('message' => __('Exam structure updated.', 'board')));
+    }
+
+    public function handle_process_exam_request() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $id = intval($_POST['request_id']);
+        $status = sanitize_text_field($_POST['status']);
+
+        global $wpdb;
+        $wpdb->update($wpdb->prefix . 'board_exam_requests', array('status' => $status), array('id' => $id));
+
+        // If approved, add to user meta so it appears in their portal
+        if ($status === 'approved') {
+            $req = $wpdb->get_row($wpdb->prepare("SELECT user_id, exam_id FROM {$wpdb->prefix}board_exam_requests WHERE id = %d", $id));
+            if ($req) {
+                $assigned = get_user_meta($req->user_id, 'assigned_exams', true) ?: array();
+                if (!is_array($assigned)) $assigned = array();
+
+                if (!in_array((int)$req->exam_id, $assigned)) {
+                    $assigned[] = (int)$req->exam_id;
+                    update_user_meta($req->user_id, 'assigned_exams', $assigned);
+                }
+
+                $u = get_userdata($req->user_id);
+                $e = $wpdb->get_row($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_exams WHERE id = %d", $req->exam_id));
+
+                Plugin::log(__('Exam Approved', 'board'), sprintf(__('User %d was approved for exam %d.', $req->user_id, $req->exam_id)), $req->user_id);
+            }
+        }
+
+        wp_send_json_success(array('message' => __('Request processed.', 'board')));
     }
 
     public function handle_update_fellowship_status() {
