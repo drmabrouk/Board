@@ -168,4 +168,50 @@ class Manager {
         $table = $wpdb->prefix . 'board_fellowships';
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
     }
+
+    public static function save_question($data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_questions';
+        if (isset($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+            return $wpdb->update($table, $data, array('id' => $id));
+        }
+        return $wpdb->insert($table, $data);
+    }
+
+    public static function get_questions($category = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_questions';
+        if ($category) {
+            return $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE category = %s ORDER BY created_at DESC", $category));
+        }
+        return $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC");
+    }
+
+    public static function get_exam_questions($exam_id) {
+        global $wpdb;
+        $t_eq = $wpdb->prefix . 'board_exam_questions';
+        $t_q = $wpdb->prefix . 'board_questions';
+        return $wpdb->get_results($wpdb->prepare("
+            SELECT q.* FROM $t_q q
+            JOIN $t_eq eq ON q.id = eq.question_id
+            WHERE eq.exam_id = %d
+            ORDER BY eq.q_order ASC", $exam_id));
+    }
+
+    public static function save_exam_request($data) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_exam_requests';
+        return $wpdb->insert($table, $data);
+    }
+
+    public static function get_exam_requests($status = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'board_exam_requests';
+        if ($status) {
+            return $wpdb->get_results($wpdb->prepare("SELECT * FROM $table WHERE status = %s ORDER BY created_at DESC", $status));
+        }
+        return $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC");
+    }
 }

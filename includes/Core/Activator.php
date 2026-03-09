@@ -39,6 +39,11 @@ class Activator {
                 'content' => '[board_registration]',
                 'slug'    => 'registration'
             ),
+            'board-session' => array(
+                'title'   => 'Assessment Session',
+                'content' => '[board_exam_session]',
+                'slug'    => 'board-session'
+            ),
             'cp' => array(
                 'title'   => 'Control Panel',
                 'content' => '[board_cp]',

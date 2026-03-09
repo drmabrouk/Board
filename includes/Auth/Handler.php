@@ -26,6 +26,7 @@ class Handler {
         add_action('wp_ajax_board_verify_document', array($this, 'handle_verification'));
         add_action('wp_ajax_board_submit_exam', array($this, 'handle_exam_submission'));
         add_action('wp_ajax_board_submit_fellowship', array($this, 'handle_submit_fellowship'));
+        add_action('wp_ajax_board_request_exam', array($this, 'handle_exam_request'));
 
         add_filter('login_redirect', array($this, 'custom_login_redirect'), 10, 3);
         add_action('wp_logout', array($this, 'custom_logout_redirect'));
@@ -270,22 +271,44 @@ class Handler {
 
         $user_id = get_current_user_id();
         $exam_id = intval($_POST['exam_id']);
-        $score = intval($_POST['score']);
+        $answers = $_POST['answer'];
 
-        $completed = get_user_meta($user_id, 'completed_exams', true);
-        if (!is_array($completed)) $completed = array();
+        // Fetch questions to calculate score if possible
+        $questions = \GSHB\Board\Database\Manager::get_exam_questions($exam_id);
+        $total_qs = count($questions);
+        $correct_count = 0;
+        $processed_answers = array();
 
-        $completed[] = array(
+        foreach ($questions as $q) {
+            $user_ans = isset($answers[$q->id]) ? $answers[$q->id] : '';
+            $processed_answers[$q->id] = $user_ans;
+
+            if ($q->type == 'MCQ' && !empty($q->correct_answer)) {
+                if (trim($user_ans) == trim($q->correct_answer)) {
+                    $correct_count++;
+                }
+            }
+        }
+
+        $score = ($total_qs > 0) ? round(($correct_count / $total_qs) * 100) : 0;
+
+        global $wpdb;
+        $wpdb->insert($wpdb->prefix . 'board_exam_results', array(
+            'user_id' => $user_id,
             'exam_id' => $exam_id,
+            'answers' => wp_json_encode($processed_answers),
             'score'   => $score,
-            'date'    => current_time('mysql')
-        );
+            'status'  => 'completed'
+        ));
 
+        // Sync to legacy meta for profile overview
+        $completed = get_user_meta($user_id, 'completed_exams', true) ?: array();
+        $completed[] = array('exam_id' => $exam_id, 'score' => $score, 'date' => current_time('mysql'));
         update_user_meta($user_id, 'completed_exams', $completed);
 
-        Plugin::log(__('Exam Submitted', 'board'), sprintf(__('User %d submitted exam %d with score %d.', $user_id, $exam_id, $score)), $user_id);
+        Plugin::log(__('Assessment Completed', 'board'), sprintf(__('User %d completed exam %d with auto-calculated score: %d%%.', $user_id, $exam_id, $score)), $user_id);
 
-        wp_send_json_success(array('message' => __('Exam submitted successfully.', 'board')));
+        wp_send_json_success(array('message' => __('Assessment submitted successfully. Your score: ' . $score . '%', 'board'), 'score' => $score));
     }
 
     public function handle_membership_request() {
@@ -356,6 +379,23 @@ class Handler {
 
             wp_send_json_success(array('message' => __('Your membership application has been submitted.', 'board')));
         }
+    }
+
+    public function handle_exam_request() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!is_user_logged_in()) wp_send_json_error();
+
+        $user_id = get_current_user_id();
+        $exam_id = intval($_POST['exam_id']);
+
+        \GSHB\Board\Database\Manager::save_exam_request(array(
+            'user_id' => $user_id,
+            'exam_id' => $exam_id,
+            'status' => 'pending'
+        ));
+
+        Plugin::log(__('Exam Request', 'board'), sprintf(__('User %d requested access to exam %d.', $user_id, $exam_id)), $user_id);
+        wp_send_json_success(array('message' => __('Your exam request has been submitted for approval.', 'board')));
     }
 
     public function handle_submit_fellowship() {

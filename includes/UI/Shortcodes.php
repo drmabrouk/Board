@@ -20,6 +20,7 @@ class Shortcodes {
         add_shortcode('board_cm_request', array($this, 'render_cm_request'));
         add_shortcode('board_members', array($this, 'render_members'));
         add_shortcode('board_programs', array($this, 'render_programs'));
+        add_shortcode('board_exam_session', array($this, 'render_exam_taker'));
         add_shortcode('board_fellowship', array($this, 'render_fellowship'));
         add_shortcode('board_fellows_directory', array($this, 'render_fellows_directory'));
         add_shortcode('gshb_certificate', array($this, 'render_single_certificate'));
@@ -73,6 +74,13 @@ class Shortcodes {
 
     public function render_programs() {
         return $this->load_template('programs.php');
+    }
+
+    public function render_exam_taker() {
+        if (!is_user_logged_in()) {
+            return '<p>' . __('Please log in to access the assessment.', 'board') . '</p>';
+        }
+        return $this->load_template('exam-taker.php');
     }
 
     public function render_fellowship() {
