@@ -366,12 +366,27 @@ a:hover {
     flex-direction: column;
     height: 100%;
     box-sizing: border-box;
-    border-radius: 8px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .board-program-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 10px 10px 0px var(--board-black);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    border-color: var(--board-black);
+}
+
+.board-program-card h3, .board-program-card h4 {
+    margin-bottom: 15px;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.board-program-card .status-badge {
+    background: var(--board-grey-100);
+    border-radius: 4px;
+    font-weight: 700;
 }
 
 .board-program-card h3, .board-program-card h4 {

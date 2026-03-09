@@ -294,6 +294,24 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $(document).on('change', '.app-status-change', function() {
+        var select = $(this);
+        var id = select.data('id');
+        var status = select.val();
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_update_application_status',
+            nonce: board_ajax.nonce,
+            app_id: id,
+            status: status
+        }, function(response) {
+            if (response.success) {
+                boardNotify(response.data.message);
+                setTimeout(function() { window.location.reload(); }, 1000);
+            }
+        });
+    });
+
     // Dynamic Deletion/Revocation
     $(document).on('click', '.delete-user, .delete-program, .delete-cert, .revoke-cert', function(e) {
         e.preventDefault();

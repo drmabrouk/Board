@@ -34,6 +34,7 @@ $user = wp_get_current_user();
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'programs') ? 'active' : ''; ?>"><a href="?cp_tab=programs" data-tooltip="<?php _e('Course Catalog', 'board'); ?>"><span class="dashicons dashicons-welcome-learn-more"></span> <?php _e('Programs', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'exams') ? 'active' : ''; ?>"><a href="?cp_tab=exams" data-tooltip="<?php _e('Assessment Center', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Exams', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'requests') ? 'active' : ''; ?>"><a href="?cp_tab=requests" data-tooltip="<?php _e('Approve Upgrades', 'board'); ?>"><span class="dashicons dashicons-email-alt"></span> <?php _e('Membership Requests', 'board'); ?></a></li>
+            <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'applications') ? 'active' : ''; ?>"><a href="?cp_tab=applications" data-tooltip="<?php _e('Program Enrollments', 'board'); ?>"><span class="dashicons dashicons-clipboard"></span> <?php _e('Applications', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'certificates') ? 'active' : ''; ?>"><a href="?cp_tab=certificates" data-tooltip="<?php _e('Credentialing', 'board'); ?>"><span class="dashicons dashicons-awards"></span> <?php _e('Certificates & Accreditations', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'verification') ? 'active' : ''; ?>"><a href="?cp_tab=verification" data-tooltip="<?php _e('Verify Integrity', 'board'); ?>"><span class="dashicons dashicons-shield-alt"></span> <?php _e('Verification', 'board'); ?></a></li>
             <li class="<?php echo (isset($_GET['cp_tab']) && $_GET['cp_tab'] == 'reports') ? 'active' : ''; ?>"><a href="?cp_tab=reports" data-tooltip="<?php _e('View Analytics', 'board'); ?>"><span class="dashicons dashicons-chart-bar"></span> <?php _e('Reports', 'board'); ?></a></li>
@@ -705,6 +706,39 @@ $user = wp_get_current_user();
             </table>
         <?php endif; ?>
 
+        <?php if ($tab == 'applications') : ?>
+            <h3><?php _e('Program Enrollment Applications', 'board'); ?></h3>
+            <table class="board-table">
+                <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Program', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Action', 'board'); ?></th></tr></thead>
+                <tbody>
+                    <?php
+                    $apps = DB::get_applications();
+                    if (!empty($apps)) :
+                        foreach ($apps as $app) :
+                            $u = get_userdata($app->user_id);
+                            $p = $wpdb->get_row($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_programs WHERE id = %d", $app->program_id));
+                            ?>
+                            <tr>
+                                <td><?php echo $app->created_at; ?></td>
+                                <td><?php echo $u ? $u->display_name : 'Deleted User'; ?></td>
+                                <td><?php echo $p ? $p->title : 'Deleted Program'; ?></td>
+                                <td><span class="status-badge status-<?php echo $app->status; ?>"><?php echo esc_html($app->status); ?></span></td>
+                                <td>
+                                    <select class="app-status-change" data-id="<?php echo $app->id; ?>" style="padding: 5px; font-size: 11px;">
+                                        <option value="pending" <?php selected($app->status, 'pending'); ?>>Pending</option>
+                                        <option value="approved" <?php selected($app->status, 'approved'); ?>>Approved</option>
+                                        <option value="rejected" <?php selected($app->status, 'rejected'); ?>>Rejected</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <tr><td colspan="5" style="text-align: center;"><?php _e('No applications found.', 'board'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
         <?php if ($tab == 'settings') : ?>
             <h3><?php _e('System Settings', 'board'); ?></h3>
             <?php $set_tab = isset($_GET['set_tab']) ? $_GET['set_tab'] : 'general'; ?>
@@ -836,32 +870,64 @@ $user = wp_get_current_user();
             <?php endif; ?>
 
             <?php if ($set_tab == 'design') : ?>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px;">
                     <form id="board-design-settings-form" enctype="multipart/form-data">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="board-form-field">
+                                <label><?php _e('Global Layout Style', 'board'); ?></label>
+                                <select name="layout_style">
+                                    <option value="compact" <?php selected(get_option('board_layout_style'), 'compact'); ?>>Compact Professional</option>
+                                    <option value="spacious" <?php selected(get_option('board_layout_style'), 'spacious'); ?>>Spacious Modern</option>
+                                </select>
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Interface Density', 'board'); ?></label>
+                                <select name="ui_density">
+                                    <option value="normal" <?php selected(get_option('board_ui_density'), 'normal'); ?>>Standard</option>
+                                    <option value="high" <?php selected(get_option('board_ui_density'), 'high'); ?>>High Performance (Reduced Padding)</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="board-form-field">
                             <label><?php _e('Upload Logo', 'board'); ?></label>
                             <input type="file" name="board_logo">
                             <?php if ($logo_url = get_option('board_logo_url')) : ?>
-                                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px;">
+                                <img src="<?php echo esc_url($logo_url); ?>" style="max-height: 50px; display: block; margin-top: 10px; filter: grayscale(100%);">
                             <?php endif; ?>
                         </div>
-                        <div class="board-form-field">
-                            <label><?php _e('Primary Color (Monochrome)', 'board'); ?></label>
-                            <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="board-form-field">
+                                <label><?php _e('Brand Primary (Mono)', 'board'); ?></label>
+                                <input type="color" name="primary_color" value="<?php echo esc_attr(get_option('board_primary_color', '#000000')); ?>">
+                            </div>
+                            <div class="board-form-field">
+                                <label><?php _e('Typography Family', 'board'); ?></label>
+                                <select name="font_family">
+                                    <option value="-apple-system, system-ui" <?php selected(get_option('board_font_family'), "-apple-system, system-ui"); ?>>System Modern</option>
+                                    <option value="'Inter', sans-serif" <?php selected(get_option('board_font_family'), "'Inter', sans-serif"); ?>>Inter Professional</option>
+                                    <option value="'Roboto Mono', monospace" <?php selected(get_option('board_font_family'), "'Roboto Mono', monospace"); ?>>Technical Mono</option>
+                                </select>
+                            </div>
                         </div>
+
                         <div class="board-form-field">
-                            <label><?php _e('Typography (Font Family)', 'board'); ?></label>
-                            <select name="font_family">
-                                <option value="Arial, sans-serif" <?php selected(get_option('board_font_family'), 'Arial, sans-serif'); ?>>Arial</option>
-                                <option value="'Times New Roman', serif" <?php selected(get_option('board_font_family'), "'Times New Roman', serif"); ?>>Times New Roman</option>
-                                <option value="'Courier New', monospace" <?php selected(get_option('board_font_family'), "'Courier New', monospace"); ?>>Courier New</option>
-                            </select>
+                            <label><?php _e('Interaction Behavior', 'board'); ?></label>
+                            <div style="background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px;">
+                                <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 10px;">
+                                    <input type="checkbox" name="enable_animations" value="on" <?php checked(get_option('board_enable_animations', 'on'), 'on'); ?> style="width: auto;"> <?php _e('Enable Smooth UI Transitions', 'board'); ?>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 10px; font-weight: normal; margin-bottom: 0;">
+                                    <input type="checkbox" name="sticky_header" value="on" <?php checked(get_option('board_sticky_header'), 'on'); ?> style="width: auto;"> <?php _e('Enable Sticky Navigation Header', 'board'); ?>
+                                </label>
+                            </div>
                         </div>
+
                         <div class="board-form-field">
-                            <label><?php _e('Custom CSS', 'board'); ?></label>
-                            <textarea name="custom_css" rows="5"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
+                            <label><?php _e('Global Custom CSS', 'board'); ?></label>
+                            <textarea name="custom_css" rows="6" style="font-family: monospace; font-size: 12px;"><?php echo esc_textarea(get_option('board_custom_css')); ?></textarea>
                         </div>
-                        <button type="submit" class="board-btn-black" style="width: auto;"><?php _e('Update Visual Identity', 'board'); ?></button>
+                        <button type="submit" class="board-btn-black"><?php _e('Apply Visual Structure', 'board'); ?></button>
                     </form>
 
                     <div id="design-preview">

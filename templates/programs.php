@@ -85,7 +85,10 @@ if (!empty($db_programs)) {
                         </div>
                     </div>
 
-                    <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="width: 100%; border-radius: 6px; text-transform: none; font-weight: 700;"><?php _e('Access Assessment Center', 'board'); ?></a>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <a href="<?php echo home_url('/program/' . $program['code']); ?>" class="board-btn-black board-btn-outline" style="width: 100%; border-radius: 6px; text-transform: none; font-weight: 700;"><?php _e('Details & Apply', 'board'); ?></a>
+                        <a href="<?php echo home_url('/qb?p=' . urlencode($program['code'])); ?>" class="board-btn-black" style="width: 100%; border-radius: 6px; text-transform: none; font-weight: 700;"><?php _e('Assessments', 'board'); ?></a>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>

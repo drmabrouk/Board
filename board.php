@@ -77,8 +77,10 @@ class Board {
 
     public function add_rewrite_rules() {
         add_rewrite_rule('^certificate/([^/]+)/?', 'index.php?board_cert_serial=$matches[1]', 'top');
+        add_rewrite_rule('^program/([^/]+)/?', 'index.php?board_prog_code=$matches[1]', 'top');
         add_filter('query_vars', function($vars) {
             $vars[] = 'board_cert_serial';
+            $vars[] = 'board_prog_code';
             return $vars;
         });
     }
@@ -124,18 +126,58 @@ class Board {
                 exit;
             }
         }
+
+        // Handle Program Details Template
+        $prog_code = get_query_var('board_prog_code');
+        if ($prog_code) {
+            $program = \GSHB\Board\Database\Manager::get_program_by_code($prog_code);
+            if ($program) {
+                include BOARD_PATH . 'templates/program-details.php';
+                exit;
+            } else {
+                wp_redirect(home_url('/programs?error=notfound'));
+                exit;
+            }
+        }
     }
 
     public function inject_custom_css() {
         $custom_css = get_option('board_custom_css');
         $primary_color = get_option('board_primary_color', '#000000');
+        $font_family = get_option('board_font_family', '-apple-system, system-ui');
+        $layout_style = get_option('board_layout_style', 'compact');
+        $ui_density = get_option('board_ui_density', 'normal');
+        $enable_animations = get_option('board_enable_animations', 'on');
+        $sticky_header = get_option('board_sticky_header', 'off');
 
         echo '<style type="text/css">';
+        echo ":root { --board-font-family: {$font_family}; }";
+
+        if ($layout_style === 'spacious') {
+            echo ".board-container { max-width: 1600px; padding: 50px; }";
+            echo ".board-cp-main { padding: 80px; }";
+        }
+
+        if ($ui_density === 'high') {
+            echo ".board-table th, .board-table td { padding: 10px 15px; }";
+            echo ".board-program-card { padding: 20px; }";
+            echo ".board-form-field { margin-bottom: 12px; }";
+        }
+
+        if ($enable_animations === 'off') {
+            echo "* { transition: none !important; animation: none !important; }";
+        }
+
+        if ($sticky_header === 'on') {
+            echo ".board-cp-header { position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }";
+        }
+
         if ($custom_css) echo $custom_css;
+
         if ($primary_color !== '#000000') {
-            echo ".board-btn-black { background-color: {$primary_color} !important; }";
+            echo ".board-btn-black { background-color: {$primary_color} !important; border-color: {$primary_color} !important; }";
             echo ".board-cp-header, .board-cp-sidebar, .board-table th { background: {$primary_color} !important; }";
-            echo ".board-form-field input, .board-form-field select, .board-form-field textarea { border-color: {$primary_color} !important; }";
+            echo ".board-form-field input:focus, .board-form-field select:focus, .board-form-field textarea:focus { border-color: {$primary_color} !important; }";
         }
         echo '</style>';
     }

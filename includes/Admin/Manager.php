@@ -31,6 +31,8 @@ class Manager {
         add_action('wp_ajax_board_link_membership', array($this, 'handle_link_membership'));
         add_action('wp_ajax_board_user_lookup', array($this, 'handle_user_lookup'));
         add_action('wp_ajax_board_revoke_certificate', array($this, 'handle_revoke_certificate'));
+        add_action('wp_ajax_board_submit_program_application', array($this, 'handle_submit_application'));
+        add_action('wp_ajax_board_update_application_status', array($this, 'handle_update_application_status'));
         add_action('wp_ajax_board_delete_certificate', array($this, 'handle_delete_certificate'));
         add_action('wp_ajax_board_delete_user', array($this, 'handle_delete_user'));
         add_action('wp_ajax_board_add_user', array($this, 'handle_add_user'));
@@ -508,6 +510,10 @@ class Manager {
 
         update_option('board_primary_color', sanitize_hex_color($_POST['primary_color']));
         update_option('board_font_family', sanitize_text_field($_POST['font_family']));
+        update_option('board_layout_style', sanitize_text_field($_POST['layout_style']));
+        update_option('board_ui_density', sanitize_text_field($_POST['ui_density']));
+        update_option('board_enable_animations', isset($_POST['enable_animations']) ? 'on' : 'off');
+        update_option('board_sticky_header', isset($_POST['sticky_header']) ? 'on' : 'off');
         update_option('board_custom_css', wp_strip_all_tags($_POST['custom_css']));
 
         Plugin::log(__('Design Updated', 'board'), __('Design and branding settings were updated.', 'board'), get_current_user_id());
@@ -692,6 +698,42 @@ class Manager {
         global $wpdb;
         $table = $wpdb->prefix . 'board_memberships';
         return $wpdb->get_results("SELECT * FROM $table WHERE status = 'pending' ORDER BY created_at DESC");
+    }
+
+    public function handle_submit_application() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!is_user_logged_in()) wp_send_json_error();
+
+        $user_id = get_current_user_id();
+        $program_id = intval($_POST['program_id']);
+        $data = $_POST['data'];
+
+        DB::save_application(array(
+            'user_id' => $user_id,
+            'program_id' => $program_id,
+            'status' => 'pending',
+            'data' => $data,
+            'step' => 2
+        ));
+
+        Plugin::log(__('Program Application', 'board'), sprintf(__('User %d applied for program %d.', $user_id, $program_id)));
+        wp_send_json_success(array('message' => __('Application submitted successfully.', 'board')));
+    }
+
+    public function handle_update_application_status() {
+        check_ajax_referer('board_nonce', 'nonce');
+        if (!Roles::can_access_cp()) wp_send_json_error();
+
+        $id = intval($_POST['app_id']);
+        $status = sanitize_text_field($_POST['status']);
+
+        DB::save_application(array(
+            'id' => $id,
+            'status' => $status
+        ));
+
+        Plugin::log(__('Application Status Updated', 'board'), sprintf(__('Application %d status changed to %s.', $id, $status)));
+        wp_send_json_success(array('message' => __('Status updated.', 'board')));
     }
 
     public function handle_user_lookup() {
