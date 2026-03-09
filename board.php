@@ -90,23 +90,33 @@ class Board {
 
         $current_user_id = get_current_user_id();
 
-        if (is_page('cp') && !Core\Roles::can_access_cp($current_user_id)) {
-            wp_redirect(home_url('/registration'));
-            exit;
+        // Strict isolation for Control Panel
+        if (is_page('cp')) {
+            if (!Core\Roles::can_access_cp($current_user_id)) {
+                wp_safe_redirect(is_user_logged_in() ? home_url() : home_url('/registration'));
+                exit;
+            }
         }
 
-        if (is_page('mb') && !Core\Roles::can_access_mb($current_user_id)) {
-            wp_redirect(home_url('/registration'));
-            exit;
+        // Strict isolation for Member Dashboard
+        if (is_page('mb')) {
+            if (!Core\Roles::can_access_mb($current_user_id)) {
+                wp_safe_redirect(is_user_logged_in() ? home_url() : home_url('/registration'));
+                exit;
+            }
         }
 
-        if (is_page('cm-request') && !Core\Roles::is_member($current_user_id)) {
-            wp_redirect(home_url('/registration'));
-            exit;
+        // Permissions for requests and pathways
+        if (is_page('cm-request') || is_page('fellowship')) {
+            if (!Core\Roles::is_member($current_user_id) && !Core\Roles::is_certified_member($current_user_id)) {
+                wp_safe_redirect(home_url('/registration'));
+                exit;
+            }
         }
 
-        if ((is_page('qb') || is_page('programs')) && !is_user_logged_in()) {
-            wp_redirect(home_url('/registration'));
+        // Public but restricted areas
+        if ((is_page('qb') || is_page('programs') || is_page('members') || is_page('fellows')) && !is_user_logged_in()) {
+            wp_safe_redirect(home_url('/registration'));
             exit;
         }
 

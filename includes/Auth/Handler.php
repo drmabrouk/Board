@@ -79,11 +79,11 @@ class Handler {
                 return home_url('/mb');
             }
         }
-        return $redirect_to;
+        return home_url();
     }
 
     public function custom_logout_redirect() {
-        wp_redirect(home_url());
+        wp_safe_redirect(home_url());
         exit;
     }
 
