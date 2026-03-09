@@ -20,9 +20,13 @@ $user = wp_get_current_user();
         <div id="global-search-results" class="board-search-suggestions"></div>
     </div>
 
-    <div class="board-cp-user" style="flex: 0 0 auto;">
-        <?php printf(__('Welcome, %s', 'board'), $user->display_name); ?> |
-        <a href="<?php echo wp_logout_url(home_url('/registration')); ?>" style="color: white;"><?php _e('Logout', 'board'); ?></a>
+    <div class="board-cp-user" style="flex: 0 0 auto; display: flex; align-items: center; gap: 15px;">
+        <div style="text-align: right;">
+            <div style="font-weight: 700;"><?php printf(__('Welcome, %s', 'board'), $user->display_name); ?></div>
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px;"><?php echo date_i18n('l, j F Y'); ?></div>
+        </div>
+        <div style="width: 1px; height: 25px; background: rgba(255,255,255,0.2);"></div>
+        <a href="<?php echo wp_logout_url(home_url('/registration')); ?>" style="color: white; font-size: 12px; font-weight: 700; text-transform: uppercase;"><?php _e('Logout', 'board'); ?></a>
     </div>
 </div>
 
@@ -259,6 +263,13 @@ $user = wp_get_current_user();
         <?php endif; ?>
 
         <?php if ($tab == 'programs') : ?>
+            <?php $prog_sub = isset($_GET['prog_sub']) ? $_GET['prog_sub'] : 'list'; ?>
+            <div style="display: flex; border-bottom: 1px solid #ddd; margin-bottom: 30px; gap: 30px;">
+                <a href="?cp_tab=programs&prog_sub=list" style="padding: 10px 0; text-decoration: none; color: <?php echo $prog_sub == 'list' ? 'black' : 'grey'; ?>; font-weight: 700; border-bottom: 2px solid <?php echo $prog_sub == 'list' ? 'black' : 'transparent'; ?>;"><?php _e('Program List', 'board'); ?></a>
+                <a href="?cp_tab=programs&prog_sub=apps" style="padding: 10px 0; text-decoration: none; color: <?php echo $prog_sub == 'apps' ? 'black' : 'grey'; ?>; font-weight: 700; border-bottom: 2px solid <?php echo $prog_sub == 'apps' ? 'black' : 'transparent'; ?>;"><?php _e('Applications Workflow', 'board'); ?></a>
+            </div>
+
+            <?php if ($prog_sub == 'list') : ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3><?php _e('Manage Programs', 'board'); ?></h3>
                 <div style="display: flex; gap: 10px; align-items: center;">
@@ -381,6 +392,44 @@ $user = wp_get_current_user();
                     <p><?php _e('No programs found.', 'board'); ?></p>
                 <?php endif; ?>
             </div>
+            <?php endif; ?>
+
+            <?php if ($prog_sub == 'apps') : ?>
+                <div style="background: #f9f9f9; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+                    <h3><?php _e('Enrollment Workflow Manager', 'board'); ?></h3>
+                    <p style="font-size: 14px; color: #666;"><?php _e('Review and process structured program applications using the intelligent approval system.', 'board'); ?></p>
+                </div>
+                <table class="board-table">
+                    <thead><tr><th><?php _e('Date', 'board'); ?></th><th><?php _e('Applicant', 'board'); ?></th><th><?php _e('Program', 'board'); ?></th><th><?php _e('Details', 'board'); ?></th><th><?php _e('Status', 'board'); ?></th><th><?php _e('Workflow Action', 'board'); ?></th></tr></thead>
+                    <tbody>
+                        <?php
+                        $apps = DB::get_applications();
+                        if (!empty($apps)) :
+                            foreach ($apps as $app) :
+                                $u = get_userdata($app->user_id);
+                                $p = $wpdb->get_row($wpdb->prepare("SELECT title FROM {$wpdb->prefix}board_programs WHERE id = %d", $app->program_id));
+                                ?>
+                                <tr>
+                                    <td><?php echo $app->created_at; ?></td>
+                                    <td><strong><?php echo $u ? $u->display_name : 'User'; ?></strong></td>
+                                    <td><?php echo $p ? $p->title : 'Program'; ?></td>
+                                    <td><button class="board-btn-black board-btn-small board-btn-outline view-app-data" data-data="<?php echo esc_attr($app->data); ?>"><?php _e('View App', 'board'); ?></button></td>
+                                    <td><span class="status-badge status-<?php echo $app->status; ?>"><?php echo esc_html($app->status); ?></span></td>
+                                    <td>
+                                        <select class="app-status-change" data-id="<?php echo $app->id; ?>" style="padding: 5px; font-size: 11px;">
+                                            <option value="pending" <?php selected($app->status, 'pending'); ?>>Review Pending</option>
+                                            <option value="approved" <?php selected($app->status, 'approved'); ?>>Approve Enrollment</option>
+                                            <option value="rejected" <?php selected($app->status, 'rejected'); ?>>Reject Application</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <tr><td colspan="6" style="text-align: center;"><?php _e('No active applications in workflow.', 'board'); ?></td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if ($tab == 'exams') : ?>

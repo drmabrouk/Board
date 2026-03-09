@@ -175,6 +175,8 @@ a:hover {
     border: 1px solid var(--board-black);
     border-top: none;
     margin-top: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .board-cp-sidebar {
@@ -203,6 +205,7 @@ a:hover {
     gap: 15px;
     font-size: 15px;
     font-weight: 500;
+    text-decoration: none !important;
     transition: var(--board-transition);
 }
 
@@ -212,6 +215,11 @@ a:hover {
     background: var(--board-grey-dark);
     opacity: 1;
     outline: none;
+    text-decoration: none !important;
+}
+
+.board-cp-sidebar ul li a .dashicons {
+    text-decoration: none !important;
 }
 
 .board-cp-sidebar ul li a .dashicons {

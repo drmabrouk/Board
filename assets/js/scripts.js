@@ -520,6 +520,11 @@ jQuery(document).ready(function($) {
         });
     });
 
+    $(document).on('click', '.view-app-data', function() {
+        var data = $(this).data('data');
+        alert("Application Form Data:\n\n" + data.replace(/&/g, "\n").replace(/=/g, ": "));
+    });
+
     $(document).on('click', '#copy-serial', function() {
         var serial = $(this).data('serial');
         var btn = $(this);

@@ -37,36 +37,38 @@ if (!empty($assigned_exam_ids)) {
 
 
 <div class="board-container">
-    <div style="text-align: center; margin-bottom: 40px;">
-        <h2><?php printf(__('Exams for %s', 'board'), $program_code); ?></h2>
-        <p><?php _e('Manage and take your assigned professional examinations.', 'board'); ?></p>
+    <div style="text-align: center; margin-bottom: 60px;">
+        <h1 style="font-size: 42px; margin-bottom: 15px;"><?php printf(__('Assessments for %s', 'board'), $program_code); ?></h1>
+        <p style="font-size: 18px; color: #666; max-width: 700px; margin: 0 auto;"><?php _e('Review and complete your assigned professional examinations to achieve official certification.', 'board'); ?></p>
     </div>
 
-    <div style="max-width: 800px; margin: 0 auto;">
-        <div class="board-cp-header" style="margin-bottom: 30px; border: 1px solid var(--board-black);">
-            <div class="board-cp-logo" style="display: flex; align-items: center; gap: 10px;">
-                <span class="dashicons dashicons-clipboard"></span>
-                <strong><?php _e('Assigned Exams', 'board'); ?></strong>
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 20px 30px; background: #000; color: #fff; border-radius: 12px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="dashicons dashicons-clipboard" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                <strong style="text-transform: uppercase; letter-spacing: 1px; font-size: 14px;"><?php _e('Active Assignments', 'board'); ?></strong>
             </div>
-            <div class="board-cp-user"><?php echo $user->display_name; ?></div>
+            <div style="font-size: 14px; font-weight: 700; opacity: 0.8;"><?php echo $user->display_name; ?></div>
         </div>
 
         <?php if (!empty($assigned_exams)) : ?>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
             <?php foreach ($assigned_exams as $exam) : ?>
-                <div class="board-program-card" style="margin-bottom: 20px; border-left: 8px solid var(--board-black);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-                        <div>
-                            <h3 style="margin: 0;"><?php echo esc_html($exam['title']); ?></h3>
-                            <p style="margin: 8px 0; font-size: 13px;">
-                                <strong style="text-transform: uppercase; font-size: 11px;"><?php _e('Exam Code:', 'board'); ?></strong> <code><?php echo esc_html($exam['code']); ?></code>
-                                <span style="margin: 0 10px; color: #ccc;">|</span>
-                                <strong style="text-transform: uppercase; font-size: 11px;"><?php _e('Due Date:', 'board'); ?></strong> <?php echo esc_html($exam['due']); ?>
-                            </p>
+                <div class="board-program-card" style="border-left: 10px solid #000;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 30px;">
+                        <div style="flex: 1; min-width: 300px;">
+                            <h3 style="margin: 0; font-size: 22px;"><?php echo esc_html($exam['title']); ?></h3>
+                            <div style="margin-top: 15px; display: flex; gap: 25px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #666;">
+                                <span><strong><?php _e('ID:', 'board'); ?></strong> <code><?php echo esc_html($exam['code']); ?></code></span>
+                                <span><strong><?php _e('Deadline:', 'board'); ?></strong> <?php echo esc_html($exam['due']); ?></span>
+                                <span><strong><?php _e('Status:', 'board'); ?></strong> <span style="color: #000; font-weight: 800;"><?php _e('Awaiting Completion', 'board'); ?></span></span>
+                            </div>
                         </div>
-                        <button class="board-btn-black start-exam" data-id="<?php echo $exam['id']; ?>" style="width: auto; padding: 12px 40px;"><?php _e('Start Exam', 'board'); ?></button>
+                        <button class="board-btn-black start-exam" data-id="<?php echo $exam['id']; ?>" style="padding: 18px 50px; font-size: 14px;"><?php _e('Launch Assessment', 'board'); ?></button>
                     </div>
                 </div>
             <?php endforeach; ?>
+            </div>
         <?php else : ?>
             <div class="board-program-card" style="text-align: center;">
                 <p><?php _e('No exams have been assigned to you at this time.', 'board'); ?></p>
