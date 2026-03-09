@@ -25,13 +25,13 @@ if (!empty($db_programs)) {
 }
 ?>
 
-<div class="board-container">
-    <div style="text-align: center; margin-bottom: 50px;">
-        <h1 style="font-size: 36px; margin-bottom: 10px;"><?php _e('Professional Programs', 'board'); ?></h1>
-        <p style="font-size: 18px; color: #666;"><?php _e('Accredited courses and certification paths for global health professionals.', 'board'); ?></p>
+<div class="board-container" style="padding-top: 50px;">
+    <div style="text-align: center; margin-bottom: 80px;">
+        <h1 style="font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 15px; line-height: 1;"><?php _e('Professional Programs', 'board'); ?></h1>
+        <p style="font-size: 20px; color: #666; max-width: 800px; margin: 0 auto; line-height: 1.5;"><?php _e('Explore advanced clinical courses, accredited diplomas, and global health leadership pathways designed for industry-leading professionals.', 'board'); ?></p>
     </div>
 
-    <div style="margin-bottom: 40px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; max-width: 1000px; margin-left: auto; margin-right: auto;">
+    <div style="margin-bottom: 50px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 25px; max-width: 1100px; margin-left: auto; margin-right: auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
         <div style="position: relative;">
             <label style="display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase;"><?php _e('Search Programs', 'board'); ?></label>
             <input type="text" id="program-search" placeholder="<?php _e('Search by title, code, or instructor...', 'board'); ?>" style="width: 100%; padding: 15px; border: 1px solid var(--board-black); border-radius: 6px;">

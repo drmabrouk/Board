@@ -84,13 +84,20 @@ a:hover {
 .board-form-field select,
 .board-form-field textarea {
     width: 100%;
-    padding: 12px 15px;
-    border: 1px solid var(--board-black);
-    font-size: 14px;
+    padding: 15px 20px;
+    border: 1px solid var(--board-grey-300);
+    font-size: 15px;
     background: var(--board-white);
     color: var(--board-black);
     box-sizing: border-box;
     font-family: inherit;
+    border-radius: 6px;
+    transition: var(--board-transition);
+}
+
+.board-form-field input::placeholder {
+    color: var(--board-grey-500);
+    font-weight: 400;
 }
 
 .board-form-field input:focus,
@@ -175,6 +182,8 @@ a:hover {
     border: 1px solid var(--board-black);
     border-top: none;
     margin-top: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .board-cp-sidebar {
@@ -203,6 +212,7 @@ a:hover {
     gap: 15px;
     font-size: 15px;
     font-weight: 500;
+    text-decoration: none !important;
     transition: var(--board-transition);
 }
 
@@ -212,6 +222,11 @@ a:hover {
     background: var(--board-grey-dark);
     opacity: 1;
     outline: none;
+    text-decoration: none !important;
+}
+
+.board-cp-sidebar ul li a .dashicons {
+    text-decoration: none !important;
 }
 
 .board-cp-sidebar ul li a .dashicons {

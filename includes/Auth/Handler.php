@@ -14,6 +14,7 @@ class Handler {
         add_action('wp_ajax_nopriv_board_login', array($this, 'handle_login'));
         add_action('wp_ajax_nopriv_board_register', array($this, 'handle_register'));
         add_action('wp_ajax_nopriv_board_reset', array($this, 'handle_reset'));
+        add_action('wp_ajax_nopriv_board_send_reg_otp', array($this, 'handle_send_reg_otp'));
 
         // Also allow logged in users (though they shouldn't see it)
         add_action('wp_ajax_board_login', array($this, 'handle_login'));
@@ -25,6 +26,22 @@ class Handler {
 
         add_filter('login_redirect', array($this, 'custom_login_redirect'), 10, 3);
         add_action('wp_logout', array($this, 'custom_logout_redirect'));
+        add_action('template_redirect', array($this, 'handle_auth_page_redirect'));
+    }
+
+    public function handle_auth_page_redirect() {
+        if (!is_page('registration') || !is_user_logged_in()) {
+            return;
+        }
+
+        $user_id = get_current_user_id();
+        if (Roles::can_access_cp($user_id)) {
+            wp_redirect(home_url('/cp'));
+            exit;
+        } elseif (Roles::can_access_mb($user_id)) {
+            wp_redirect(home_url('/mb'));
+            exit;
+        }
     }
 
     public function handle_login() {
@@ -66,12 +83,40 @@ class Handler {
         exit;
     }
 
+    public function handle_send_reg_otp() {
+        check_ajax_referer('board_nonce', 'nonce');
+        $email = sanitize_email($_POST['email']);
+        $username = sanitize_text_field($_POST['username']);
+
+        if (username_exists($username) || email_exists($email)) {
+            wp_send_json_error(array('message' => __('Username or email already exists.', 'board')));
+        }
+
+        $otp = sprintf('%06d', mt_rand(1, 999999));
+        set_transient('board_reg_otp_' . md5($email), $otp, 1800); // 30 mins
+
+        \GSHB\Board\Core\Email::send($email, 'password_otp', array(
+            'name' => $username,
+            'code' => $otp
+        ));
+
+        wp_send_json_success(array('message' => __('Verification code sent to your email.', 'board')));
+    }
+
     public function handle_register() {
         check_ajax_referer('board_nonce', 'nonce');
 
         $username = sanitize_text_field($_POST['username']);
         $email = sanitize_email($_POST['email']);
         $password = $_POST['password'];
+        $otp = sanitize_text_field($_POST['reg_otp']);
+        $full_name = sanitize_text_field($_POST['full_name']);
+        $pal_id = sanitize_text_field($_POST['palestinian_id']);
+
+        $stored_otp = get_transient('board_reg_otp_' . md5($email));
+        if ($stored_otp !== $otp) {
+            wp_send_json_error(array('message' => __('Invalid or expired verification code.', 'board')));
+        }
 
         if (username_exists($username) || email_exists($email)) {
             wp_send_json_error(array('message' => __('Username or email already exists.', 'board')));
@@ -82,20 +127,21 @@ class Handler {
         if (is_wp_error($user_id)) {
             wp_send_json_error(array('message' => $user_id->get_error_message()));
         } else {
-            // Set default role to board_member
+            delete_transient('board_reg_otp_' . md5($email));
+
             $user = new \WP_User($user_id);
             $user->set_role('board_member');
 
-            // Initialize metadata
+            wp_update_user(array('ID' => $user_id, 'display_name' => $full_name));
             update_user_meta($user_id, 'membership_status', 'active');
+            update_user_meta($user_id, 'palestinian_id', $pal_id);
             update_user_meta($user_id, 'verification_code', 'GSHB-' . strtoupper(wp_generate_password(8, false)));
 
-            // Log the user in
             wp_set_current_user($user_id);
             wp_set_auth_cookie($user_id);
 
             \GSHB\Board\Core\Email::send($email, 'registration', array(
-                'name' => $username
+                'name' => $full_name
             ));
 
             wp_send_json_success(array('message' => __('Registration successful!', 'board')));
