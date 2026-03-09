@@ -52,6 +52,15 @@ jQuery(document).ready(function($) {
     $(document).on('submit', '#board-auth-form, #board-auth-form-reg, #board-auth-form-reset, #board-auth-form-otp, #board-auth-form-new-pass', function(e) {
         e.preventDefault();
         var form = $(this);
+
+        // Real-time validation for registration
+        if (form.attr('id') === 'board-auth-form-reg') {
+            var pass = form.find('input[name="password"]').val();
+            if (pass.length < 8) {
+                boardNotify('Password must be at least 8 characters long.', 'error');
+                return;
+            }
+        }
         var formData = form.serialize();
         var action = form.data('action');
 
@@ -92,6 +101,70 @@ jQuery(document).ready(function($) {
         var target = $(this).data('target');
         $('.board-auth-view').hide();
         $('#' + target).fadeIn();
+        // Reset registration to step 1
+        if (target === 'board-register-view') {
+            $('.reg-step').hide();
+            $('#reg-step-1').show();
+        }
+    });
+
+    // Multi-step Registration Navigation
+    $(document).on('click', '.reg-next', function() {
+        var current = $(this).closest('.reg-step');
+        var next = $('#reg-step-' + $(this).data('next'));
+
+        // Basic validation for current step
+        var valid = true;
+        current.find('input[required]').each(function() {
+            if (!$(this).val()) {
+                valid = false;
+                $(this).css('border-color', 'red');
+                boardNotify('Please fill all required fields.', 'error');
+            } else {
+                $(this).css('border-color', '');
+            }
+        });
+
+        if (valid) {
+            current.fadeOut(200, function() { next.fadeIn(); });
+        }
+    });
+
+    $(document).on('click', '.reg-prev', function() {
+        var current = $(this).closest('.reg-step');
+        var prev = $('#reg-step-' + $(this).data('prev'));
+        current.fadeOut(200, function() { prev.fadeIn(); });
+    });
+
+    // Send Registration OTP
+    $(document).on('click', '#send-reg-otp', function() {
+        var btn = $(this);
+        var form = $('#board-auth-form-reg');
+        var email = form.find('input[name="email"]').val();
+        var username = form.find('input[name="username"]').val();
+        var password = form.find('input[name="password"]').val();
+
+        if (!password) {
+            boardNotify('Please provide a secure password.', 'error');
+            return;
+        }
+
+        btn.prop('disabled', true).text('Sending OTP...');
+
+        $.post(board_ajax.ajax_url, {
+            action: 'board_send_reg_otp',
+            nonce: board_ajax.nonce,
+            email: email,
+            username: username
+        }, function(response) {
+            if (response.success) {
+                boardNotify(response.data.message);
+                $('#reg-step-2').fadeOut(200, function() { $('#reg-step-3').fadeIn(); });
+            } else {
+                boardNotify(response.data.message, 'error');
+                btn.prop('disabled', false).text('Verify Email');
+            }
+        });
     });
 
     // Live Search: Users
