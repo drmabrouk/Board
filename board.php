@@ -132,7 +132,7 @@ class Board {
                 include BOARD_PATH . 'templates/certificate-details.php';
                 exit;
             } else {
-                wp_redirect(home_url('/verify?error=notfound'));
+                wp_safe_redirect(home_url('/verify?error=notfound'));
                 exit;
             }
         }
@@ -145,7 +145,7 @@ class Board {
                 include BOARD_PATH . 'templates/program-details.php';
                 exit;
             } else {
-                wp_redirect(home_url('/programs?error=notfound'));
+                wp_safe_redirect(home_url('/programs?error=notfound'));
                 exit;
             }
         }

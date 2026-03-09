@@ -40,10 +40,10 @@ class Handler {
 
         $user_id = get_current_user_id();
         if (Roles::can_access_cp($user_id)) {
-            wp_redirect(home_url('/cp'));
+            wp_safe_redirect(home_url('/cp'));
             exit;
         } elseif (Roles::can_access_mb($user_id)) {
-            wp_redirect(home_url('/mb'));
+            wp_safe_redirect(home_url('/mb'));
             exit;
         }
     }
